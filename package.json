@@ -1,0 +1,75 @@
+{
+  "name": "vscode-mocha-test-runner",
+  "displayName": "vscode-mocha-test-runner",
+  "description": "",
+  "version": "0.0.1",
+  "publisher": "me",
+  "engines": {
+    "vscode": "^1.10.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Mocha options",
+      "properties": {
+        "mocha.options": {
+          "default": {},
+          "description": "Mocha: Options to run Mocha"
+        },
+        "mocha.files.glob": {
+          "default": "test/**/*.test.js",
+          "description": "Mocha: Glob to search for test files",
+          "type": "string"
+        },
+        "mocha.files.ignore": {
+          "default": [
+            "**/.git/**/*",
+            "**/node_modules/**/*"
+          ],
+          "description": "Mocha: Globs to ignore when searching for test files",
+          "type": [
+            "string"
+          ]
+        },
+        "mocha.env": {
+          "default": {},
+          "description": "Mocha: Environment variables to run your tests"
+        },
+        "mocha.compiler": {
+          "default": {},
+          "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand"
+        },
+        "mocha.runTestsOnSave": {
+          "default": true,
+          "description": "Mocha: Automatically executes test on file save",
+          "type":"boolean"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/deep-extend": "^0.4.30",
+    "@types/mocha": "^2.2.40",
+    "@types/node": "^7.0.12",
+    "chai": "^3.5.0",
+    "deep-extend": "^0.4.1",
+    "escape-regexp": "0.0.1",
+    "mocha": "^3.2.0",
+    "typescript": "^2.2.2",
+    "vscode": "^1.1.0"
+  }
+}

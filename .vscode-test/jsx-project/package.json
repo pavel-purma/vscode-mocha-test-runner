@@ -1,0 +1,20 @@
+{
+  "name": "jsx-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
+    "test": "mocha ./out/test/Foo.test.js"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-core": "^6.24.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-es2015": "^6.24.0",
+    "babel-preset-react": "^6.23.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2"
+  }
+}
