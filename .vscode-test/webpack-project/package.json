@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prod": "webpack",
-    "build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
+    "build-test": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
     "test": "mocha ./test/math.test.js"
   },
   "devDependencies": {
@@ -28,6 +28,7 @@
     "sass-loader": "^6.0.3",
     "ts-loader": "^2.0.3",
     "typescript": "^2.2.2",
-    "webpack": "^2.3.2"
+    "webpack": "^2.3.2",
+    "webpack-node-externals": "^1.5.4"
   }
 }

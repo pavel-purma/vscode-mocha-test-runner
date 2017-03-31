@@ -1,63 +1,115 @@
-const exec = require('child_process').exec;
+const webpack = require('webpack');
+const glob = require('glob');
 const path = require('path');
-const fs = require('fs');
+const nodeExternals = require('webpack-node-externals');
 
-// process.argv = [node.exe, _this_file_, args]
-const files = process.argv.slice(2);
+const rootPath = path.join(__dirname, '..');
 
-const tsConfig = 'tsconfig.json';
-const customTsConfig = 'vscode-mocha-test-runner.tsconfig.json';
+getFiles()
+    .then(getEntries)
+    .then(compileEntries)
+    .catch(function (err) {
+        console.error(err);
+        process.exit(1);
+    });
 
+function getFiles() {
+    return new Promise(function (resolve, reject) {
+        // process.argv = [node.exe, _this_file_, args]
+        const files = process.argv.slice(2);
+        if (files.length > 0) {
+            resolve(files);
+            return;
+        }
 
-fs.exists(tsConfig, function (exists) {
-    if (exists) {
-        fs.readFile(tsConfig, 'utf8', function (err, data) {
+        glob('test/**/*.test.*', { cwd: rootPath }, function (err, matches) {
             if (err) {
-                throw err;
+                reject(err);
+            } else {
+                resolve(matches);
             }
-
-            const json = JSON.parse(data);
-            json.compilerOptions.jsx = 'react';
-            json.compilerOptions.outDir = '.temp';
-            if (files && files.length > 0) {
-                json.files = files;
-            }
-            data = JSON.stringify(json, null, 2);
-
-            fs.writeFile(customTsConfig, data, function (err) {
-                if (err) {
-                    throw err;
-                }
-
-                runTsc(customTsConfig)
-            });
-
         });
-    } else {
-        throw new Error('tsConfig.json not found!');
-    }
-});
-
-
-
-function runTsc(project) {
-    var params = '';
-    if (project) {
-        params = ' --project ' + project;
-    }
-
-    const tsc = exec('node_modules\\.bin\\tsc.cmd' + params);
-    tsc.on('exit', function (code) {
-        if (code !== 0) {
-            process.exit(code);
-        }
-
-        if (project) {
-            fs.unlink(project, function (err) { });
-        }
     });
 }
 
+function getEntries(files) {
+    const result = [];
+    return Promise.all(files.map(function (file) {
+        const name = path.basename(file).slice(0, -9); // .test.js
+        result.push({
+            name,
+            file: '.\\' + path.normalize(file),
+            path: path.join(rootPath, '.temp', path.dirname(path.relative(rootPath, file)))
+        });
+    })).then(function () {
+        return result;
+    });
+}
 
+function compileEntries(entries) {
+    let index = 0;
 
+    const runNext = function (stats) { 
+        ++index;
+        if (index < entries.length) { 
+            return runCompiler(entries[index]);
+        }
 
+        return Promise.resolve();
+    }
+
+    return runCompiler(entries[0]).then(runNext);
+}
+
+function runCompiler(entry) {
+    return new Promise(function (resolve, reject) {
+        console.log('Compiling ' + entry.name + ' ...');
+        const config = {
+            entry: {
+                [entry.name]: entry.file
+            },
+            resolve: {
+                extensions: ['.ts', '.tsx', '.js', '.json'],
+                modules: [
+                    path.join(rootPath, 'src'),
+                    'node_modules'
+                ]
+            },
+            context: rootPath,
+            output: {
+                path: entry.path,
+                filename: '[name].test.js'
+            },
+            module: {
+                rules: [{
+                    test: /\.tsx?$/,
+                    exclude: [/node_modules/],
+                    use: [
+                        { loader: 'babel-loader' },
+                        { loader: 'ts-loader' }
+                    ]
+                }, {
+                    test: /\.s?css$/,
+                    exclude: [/node_modules/],
+                    use: [
+                        { loader: 'null-loader' }
+                    ]
+                }],
+            },
+            target: 'node',
+            externals: [nodeExternals()],
+            devtool: 'inline-source-map'
+        };
+
+        const compiler = webpack(config);
+        compiler.run(function (err, stats) {
+            if (err) {
+                reject(err);
+                return;
+            }
+            
+            console.log(stats.toString() + '\r\n');
+            resolve(stats);
+        });
+    });
+}
