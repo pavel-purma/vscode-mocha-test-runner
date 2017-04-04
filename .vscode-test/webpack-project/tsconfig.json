@@ -7,7 +7,7 @@
             "es6"
         ],
         "sourceMap": true,
-        "rootDir": ".",
+        "rootDir": "src",
         "jsx": "preserve"
     },
     "exclude": [

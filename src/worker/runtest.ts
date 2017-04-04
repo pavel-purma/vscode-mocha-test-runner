@@ -7,6 +7,7 @@ interface Args {
     options: any;
     grep: string;
     rootPath: string;
+    setup: string;
 }
 
 const escapeRegExp = require('escape-regexp');
@@ -24,6 +25,10 @@ const mocha = new Mocha(options);
 
 console.log();
 console.log('Test file(s):');
+
+if (args.setup) { 
+    mocha.addFile(path.join(args.rootPath, '.vscode', args.setup));
+}
 
 args.files.forEach(file => {
     console.log(`  ${file}`);

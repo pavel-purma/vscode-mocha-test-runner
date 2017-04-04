@@ -43,8 +43,14 @@
           "description": "Mocha: Environment variables to run your tests"
         },
         "mocha.compiler": {
-          "default": {},
-          "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand"
+          "default": "",
+          "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand",
+          "type": "string"
+        },
+        "mocha.setup": {
+          "default": "",
+          "description": "Mocha: Name of script, that will be imported into mocha.",
+          "type": "string"
         },
         "mocha.runTestsOnSave": {
           "default": true,

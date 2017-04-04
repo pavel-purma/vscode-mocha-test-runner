@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
-    "test": "mocha ./out/test/Foo.test.js"
+    "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
+    "test": "mocha ./out/test/Foo.test.js",
+    "build": "babel src --out-dir dist"
   },
   "devDependencies": {
     "babel-cli": "^6.24.0",

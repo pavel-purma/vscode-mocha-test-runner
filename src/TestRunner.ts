@@ -178,7 +178,8 @@ export module TestRunner {
                 files: testFiles,
                 options: config.options,
                 grep,
-                rootPath
+                rootPath,
+                setup: config.setup
             }),
         ];
         const runTestWorker = path.resolve(module.filename, '../worker/runtest.js');

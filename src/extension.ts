@@ -8,8 +8,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { exec } from 'child_process';
 
-const dataFile = path.join(vscode.workspace.rootPath, '.vscode/tests.json');
-
 let codeLensProvider: TestsCodeLensProvider;
 
 // this method is called when your extension is activated
@@ -37,7 +35,9 @@ export function deactivate() {
 async function runTest(document: vscode.TextDocument, selector?: string, isDescribe?: boolean, debug?: boolean) {
     try {
         const data = await TestRunner.execute(document.fileName, selector, isDescribe, debug);
-        codeLensProvider.updateCodeLenses(data);
+        if (data) {
+            codeLensProvider.updateCodeLenses(data);
+        }
     } catch (err) {
         console.error(err);
     }

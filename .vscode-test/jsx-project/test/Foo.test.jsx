@@ -13,5 +13,3 @@ describe('Foo', function (){
         expect(component.props.bar).to.equal('bar');
     });
 }); 
-
-

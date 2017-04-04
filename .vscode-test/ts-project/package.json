@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
-    "test": "mocha ./test/math.test.js"
+    "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
+    "test": "mocha ./.temp/test/math.test.js",
+    "build": "tsc"
   },
   "devDependencies": {
     "@types/chai": "^3.4.35",

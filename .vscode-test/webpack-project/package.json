@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prod": "webpack",
-    "build-test": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
-    "test": "mocha ./test/math.test.js"
+    "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
+    "test": "mocha ./.temp/test/Foo.test.js",
+    "build": "webpack"
   },
   "devDependencies": {
     "@types/chai": "^3.4.35",
