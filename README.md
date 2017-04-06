@@ -12,3 +12,7 @@ Code lens after opening vscode:
 and after running all tests: 
 
 ![preview](./Preview2.png)
+
+## Known issues:
+
+- Runner will not recognize tests not writen inside describe function.

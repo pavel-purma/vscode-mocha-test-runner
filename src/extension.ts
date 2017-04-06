@@ -21,11 +21,16 @@ export function activate(context: vscode.ExtensionContext) {
         runTest(document, selector, isDescribe, debug);
     }));
 
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider(['javascript', 'javascriptreact', 'typescript', 'typescriptreact'], codeLensProvider));
+    context.subscriptions.push(vscode.languages.registerCodeLensProvider([
+        { language: 'javascript', pattern: '**/*.test.js' },
+        { language: 'javascriptreact', pattern: '**/*.test.jsx' },
+        { language: 'typescript', pattern: '**/*.test.ts' },
+        { language: 'typescriptreact', pattern: '**/*.test.tsx' },
+    ], codeLensProvider));
 
     if (config.runTestsOnSave) {
         vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);
-    }    
+    }
 }
 
 // this method is called when your extension is deactivated

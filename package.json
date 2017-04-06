@@ -13,7 +13,7 @@
   "activationEvents": [
     "*"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/src/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -55,7 +55,7 @@
         "mocha.runTestsOnSave": {
           "default": true,
           "description": "Mocha: Automatically executes test on file save",
-          "type":"boolean"
+          "type": "boolean"
         }
       }
     }
@@ -71,10 +71,12 @@
     "@types/deep-extend": "^0.4.30",
     "@types/mocha": "^2.2.40",
     "@types/node": "^7.0.12",
+    "@types/source-map": "^0.5.0",
     "chai": "^3.5.0",
     "deep-extend": "^0.4.1",
     "escape-regexp": "0.0.1",
     "mocha": "^3.2.0",
+    "tspoon": "^1.0.367",
     "typescript": "^2.2.2",
     "vscode": "^1.1.0"
   }

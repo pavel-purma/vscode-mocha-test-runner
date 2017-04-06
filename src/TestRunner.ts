@@ -14,7 +14,9 @@ export module TestRunner {
     var currentFile: string;
 
     export async function execute(document: string, selector?: string, isDescribe?: boolean, debug?: boolean): Promise<FileTestsInfo> {
-        currentFile = path.relative(vscode.workspace.rootPath, document);
+        currentFile = path.relative(vscode.workspace.rootPath, document); // to relative
+        currentFile = currentFile.substring(0, currentFile.length - 8); // remove '.test.js'
+
         tests = await _findTests(vscode.workspace.rootPath);
         if (!tests.length) {
             vscode.window.showWarningMessage('No tests were found.');
@@ -185,19 +187,7 @@ export module TestRunner {
         const runTestWorker = path.resolve(module.filename, '../worker/runtest.js');
 
         if (debug) {
-            let launchConfig = {
-                "type": "node",
-                "request": "launch",
-                "name": "Debugger",
-                "cwd": "c:/projects/cstech/vscode/vscode-mocha-test-runner",
-                "protocol": "inspector",
-                "port": 5858,
-                "args": [runTestWorker].concat(args)
-            };
-
-            return new Promise(resolve => {
-                vscode.commands.executeCommand('vscode.startDebug', launchConfig).then(() => resolve({}));
-            })
+            // todo: figure out how to fire up mocha tests with vscode debug
         } else {
             return fork(runTestWorker, args, { env: envWithNodePath(rootPath) })
                 .then<MochaTestResult[]>(process => new Promise<any>((resolve, reject) => {
