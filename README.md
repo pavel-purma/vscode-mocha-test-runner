@@ -16,3 +16,5 @@ and after running all tests:
 ## Known issues:
 
 - Runner will not recognize tests not writen inside describe function.
+
+- cannot figure out how to start mocha and attach vscode debugger
