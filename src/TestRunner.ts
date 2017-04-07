@@ -12,6 +12,7 @@ export module TestRunner {
     var tests: MochaTestInfo[] = [];
     var fileTestsInfo: FileTestsInfo;
     var currentFile: string;
+    var outputChannel: vscode.OutputChannel;
 
     export async function execute(document: string, selector?: string, isDescribe?: boolean, debug?: boolean): Promise<FileTestsInfo> {
         currentFile = path.relative(vscode.workspace.rootPath, document); // to relative
@@ -66,7 +67,8 @@ export module TestRunner {
                     glob: config.files.glob,
                     ignore: config.files.ignore
                 },
-                rootPath
+                rootPath,
+                setup: config.setup
             })
         ];
 
@@ -191,8 +193,10 @@ export module TestRunner {
         } else {
             return fork(runTestWorker, args, { env: envWithNodePath(rootPath) })
                 .then<MochaTestResult[]>(process => new Promise<any>((resolve, reject) => {
-                    const outputChannel = vscode.window.createOutputChannel('Mocha');
-                    outputChannel.show();
+                    if (!outputChannel) {
+                        outputChannel = vscode.window.createOutputChannel('Mocha');
+                    }
+                    
                     outputChannel.clear();
                     outputChannel.appendLine(`Running Mocha with Node.js\n`);
 

@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import { exec } from 'child_process';
 
 let codeLensProvider: TestsCodeLensProvider;
+let compilerWatch;
 
 // this method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -53,14 +54,27 @@ async function onDidSaveTextDocument(document: vscode.TextDocument) {
         return;
     }
 
-    if (!config.compiler) {
+    if (!config.compiler && !config.watch) {
         runTest(document);
         return;
     }
 
-    const relativePath = path.relative(vscode.workspace.rootPath, document.fileName);
+    if (config.watch) { 
+        if (!compilerWatch) {
+            const compilerPath = path.join('.vscode', config.watch);
+            const process = await fork(compilerPath, [], { cwd: vscode.workspace.rootPath });
+            process.stderr.on('data', data => {
+                if (data === 'compiled') {
+                    runTest(document);
+                }
+            });
+        }
+        
+        return;
+    }
+    
     const compilerPath = path.join('.vscode', config.compiler);
-    const process = await fork(compilerPath, [relativePath], { cwd: vscode.workspace.rootPath });
+    const process = await fork(compilerPath, ['--watch'], { cwd: vscode.workspace.rootPath });
     process.on('exit', (code, signal) => {
         if (code !== 0) {
             return;

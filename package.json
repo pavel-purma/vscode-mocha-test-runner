@@ -47,6 +47,11 @@
           "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand",
           "type": "string"
         },
+        "mocha.watch": {
+          "default": "",
+          "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand - watch mode",
+          "type": "string"
+        },
         "mocha.setup": {
           "default": "",
           "description": "Mocha: Name of script, that will be imported into mocha.",

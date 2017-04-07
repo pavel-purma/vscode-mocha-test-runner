@@ -8,6 +8,7 @@ interface Config {
     };
     env: any;
     compiler: string;
+    watch: string;
     setup: string;
     runTestsOnSave: boolean;
 

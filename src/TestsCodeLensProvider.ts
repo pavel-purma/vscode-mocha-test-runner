@@ -127,6 +127,11 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
                 return obj.statements.map(statement => this._visit(sourceFile, statement));
             }
 
+            case ts.SyntaxKind.ImportDeclaration:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.PropertyAccessExpression:
+                return null;
+                
             default: {
                 console.log('Unresolved node: \'' + ts.SyntaxKind[node.kind] + '\'');
                 return null;                

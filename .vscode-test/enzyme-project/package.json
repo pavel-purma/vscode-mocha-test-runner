@@ -5,6 +5,7 @@
   "scripts": {
     "build": "webpack --colors --display-error-details",
     "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
+    "test-watch": "node .\\.vscode\\vscode-mocha-test-runner.watch.js",
     "test":"mocha .\\.temp --colors --recursive --require .\\.vscode\\vscode-mocha-test-runner.setup.js"
   },
   "dependencies": {

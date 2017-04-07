@@ -9,5 +9,6 @@
     },
     "mocha.files.glob": "./.temp/test/**/*.test.js",
     "mocha.compiler": "vscode-mocha-test-runner.compiler.js",
+    "mocha.watch": "vscode-mocha-test-runner.watch.js",
     "mocha.setup": "vscode-mocha-test-runner.setup.js"
 }

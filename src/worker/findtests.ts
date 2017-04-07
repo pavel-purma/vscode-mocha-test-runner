@@ -9,6 +9,7 @@ interface Args {
         ignore: string[];
     };
     rootPath: string;
+    setup: string;
 }
 
 interface TestInfo {
@@ -46,6 +47,11 @@ function createMocha(rootPath: string, options: any, glob: string, ignore: strin
 
             try {
                 const mocha = new Mocha(options);
+
+                if (args.setup) { 
+                    mocha.addFile(path.join(args.rootPath, '.vscode', args.setup));
+                }
+                
                 files.forEach(file => mocha.addFile(path.resolve(rootPath, file)));
                 (mocha as any).loadFiles();
                 resolve(mocha);
