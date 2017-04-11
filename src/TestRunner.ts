@@ -14,16 +14,21 @@ export module TestRunner {
     var currentFile: string;
     var outputChannel: vscode.OutputChannel;
 
-    export async function execute(document: string, selector?: string, isDescribe?: boolean, debug?: boolean): Promise<FileTestsInfo> {
-        currentFile = path.relative(vscode.workspace.rootPath, document); // to relative
-        currentFile = currentFile.substring(0, currentFile.length - 8); // remove '.test.js'
+    export async function execute(document?: string, selector?: string, isDescribe?: boolean, debug?: boolean): Promise<FileTestsInfo> {
+        if (document) {
+            currentFile = path.relative(vscode.workspace.rootPath, document); // to relative
+            currentFile = currentFile.substring(0, currentFile.length - 8); // remove '.test.js'
+        }    
 
         tests = await _findTests(vscode.workspace.rootPath);
         if (!tests.length) {
             vscode.window.showWarningMessage('No tests were found.');
             return;
         }
-        tests = _filterTests(tests, document);
+        
+        if (document) {
+            tests = _filterTests(tests, document);
+        }
 
         try {
             if (selector) {

@@ -13,24 +13,35 @@ let compilerWatch;
 
 // this method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
-    codeLensProvider = new TestsCodeLensProvider();
-    context.subscriptions.push(vscode.commands.registerCommand('mochaTestRunner.runTest', (document: vscode.TextDocument, selector: string, isDescribe: boolean, debug: boolean) => {
-        if (document.isDirty) {
-            document.save();
+    console.log('vscode-mocha-test-runner starting ...');
+    try {
+        codeLensProvider = new TestsCodeLensProvider();
+        context.subscriptions.push(vscode.commands.registerCommand('mochaTestRunner.runTest', (document: vscode.TextDocument, selector: string, isDescribe: boolean, debug: boolean) => {
+            if (document.isDirty) {
+                document.save();
+            }
+
+            runTest(document, selector, isDescribe, debug);
+        }));
+
+        context.subscriptions.push(vscode.commands.registerCommand('mochaTestRunner.runAllTests', (document: vscode.TextDocument, selector: string, isDescribe: boolean, debug: boolean) => {
+            TestRunner.execute();
+        }));
+
+        context.subscriptions.push(vscode.languages.registerCodeLensProvider([
+            { language: 'javascript', pattern: '**/*.test.js' },
+            { language: 'javascriptreact', pattern: '**/*.test.jsx' },
+            { language: 'typescript', pattern: '**/*.test.ts' },
+            { language: 'typescriptreact', pattern: '**/*.test.tsx' },
+        ], codeLensProvider));
+
+        if (config.runTestsOnSave) {
+            vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);
         }
 
-        runTest(document, selector, isDescribe, debug);
-    }));
-
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider([
-        { language: 'javascript', pattern: '**/*.test.js' },
-        { language: 'javascriptreact', pattern: '**/*.test.jsx' },
-        { language: 'typescript', pattern: '**/*.test.ts' },
-        { language: 'typescriptreact', pattern: '**/*.test.tsx' },
-    ], codeLensProvider));
-
-    if (config.runTestsOnSave) {
-        vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);
+        console.log('vscode-mocha-test-runner started');
+    } catch (err) {
+        console.error(err);
     }
 }
 
@@ -59,7 +70,7 @@ async function onDidSaveTextDocument(document: vscode.TextDocument) {
         return;
     }
 
-    if (config.watch) { 
+    if (config.watch) {
         if (!compilerWatch) {
             const compilerPath = path.join('.vscode', config.watch);
             const process = await fork(compilerPath, [], { cwd: vscode.workspace.rootPath });
@@ -69,10 +80,10 @@ async function onDidSaveTextDocument(document: vscode.TextDocument) {
                 }
             });
         }
-        
+
         return;
     }
-    
+
     const compilerPath = path.join('.vscode', config.compiler);
     const process = await fork(compilerPath, ['--watch'], { cwd: vscode.workspace.rootPath });
     process.on('exit', (code, signal) => {
