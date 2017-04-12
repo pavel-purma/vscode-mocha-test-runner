@@ -9,13 +9,16 @@ interface ItemBase {
     title: string;
     parent: DescribeItem;
 }
+
 interface DescribeItem extends ItemBase {
     name: 'describe';
     children: Item[];
 }
+
 interface ItItem extends ItemBase {
     name: 'it';
 }
+
 type Item = DescribeItem | ItItem;
 
 export class TestsCodeLensProvider implements vscode.CodeLensProvider {
@@ -32,25 +35,73 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
         return this._eventEmitter.event;
     }
 
-    updateCodeLenses(fileTestsInfo: FileTestsInfo) {
-        this._fileTestsInfo = fileTestsInfo;
+    updateCodeLenses(fileName: string, selector?: string);
+    updateCodeLenses(fileTestsInfo: FileTestsInfo);
+    updateCodeLenses(...args: any[]) {
+        if (typeof args[0] === 'string') {
+            const fileName: string = args[0];
+            const selector: string = args.length > 0 ? args[1] : undefined;
+
+            const codeLens = this._codeLensCache[fileName];
+            if (codeLens) {
+                for (let lens of codeLens) {
+                    if (lens.command.command === 'mochaTestRunner.runTest') {
+                        if (lens.command.arguments[0].fileName === fileName && (!selector || lens.command.arguments[1] === selector)) {
+                            lens.command.title = 'Running ...';
+                        }
+                    }
+                }
+
+                this._useCodeLensCache = true;
+            }    
+        } else {
+            this._fileTestsInfo = args[0];
+        }
+        
         this._eventEmitter.fire(null);
     }
 
+    private _itemsCache: { [fileName: string]: Item[] } = {};
+    private _codeLensCache: { [fileName: string]: vscode.CodeLens[] } = {};
+    private _useCodeLensCache: boolean;
+
+    invalidateCacheForFile(fileName: string) {
+        delete this._itemsCache[fileName];
+    }
+
     provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CodeLens[]> {
-        const sourceFile = ts.createSourceFile(document.fileName, document.getText(), ts.ScriptTarget.Latest, false, ts.ScriptKind.Unknown);
-        const tree = sourceFile.statements.map(statement => this._visit(sourceFile, statement)).filter(o => o != null);
+        let codeLens: vscode.CodeLens[];
 
-        let fileIdentifier = path.relative(vscode.workspace.rootPath, document.fileName); // to relative
-        fileIdentifier = fileIdentifier.substring(0, fileIdentifier.length - 8); // remove '.test.js'
-
-        const codeLens: vscode.CodeLens[] = [];
-        const testsInfo = this._fileTestsInfo && this._fileTestsInfo[fileIdentifier];
-
-        for (let item of tree) {
-            this._createCodeLens(document, codeLens, item, undefined, testsInfo);
+        if (this._useCodeLensCache) {
+            this._useCodeLensCache = false;
+            codeLens = this._codeLensCache[document.fileName];
         }
 
+        if (!codeLens) {
+            let tree: Item[] = undefined;
+            if (!document.isDirty) {
+                this._itemsCache[document.fileName];
+            }
+
+            if (!tree) {
+                const sourceFile = ts.createSourceFile(document.fileName, document.getText(), ts.ScriptTarget.Latest, false, ts.ScriptKind.Unknown);
+                tree = sourceFile.statements.map(statement => this._visit(sourceFile, statement)).filter(o => o != null);
+                this._itemsCache[document.fileName] = tree;
+            }
+
+            let fileIdentifier = path.relative(vscode.workspace.rootPath, document.fileName); // to relative
+            fileIdentifier = fileIdentifier.substring(0, fileIdentifier.length - 8); // remove '.test.js'
+
+
+            const testsInfo = this._fileTestsInfo && this._fileTestsInfo[fileIdentifier];
+
+            codeLens = [];
+            for (let item of tree) {
+                this._createCodeLens(document, codeLens, item, undefined, testsInfo);
+            }
+        }
+
+        this._codeLensCache[document.fileName] = codeLens;
         return codeLens;
     }
 
@@ -130,10 +181,10 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
             case ts.SyntaxKind.VariableStatement:
             case ts.SyntaxKind.PropertyAccessExpression:
                 return null;
-                
+
             default: {
                 console.log('Unresolved node: \'' + ts.SyntaxKind[node.kind] + '\'');
-                return null;                
+                return null;
             }
         }
     }
@@ -148,7 +199,7 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
         }
 
         if (item.name === 'describe') {
-            let testsCounter = 0, inconclusiveCounter = 0, succeedCounter = 0, failCounter = 0;
+            let testsCounter = 0, inconclusiveCounter = 0, succeedCounter = 0, failCounter = 0, runningCounter = 0;
             for (let child of item.children) {
                 const { tests, inconclusive, succeed, fail } = this._createCodeLens(document, codeLens, child, selector, testInfo);
                 testsCounter += tests;
@@ -168,7 +219,7 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
                 arguments: [
                     document,
                     selector,
-                    true,
+                    true, // is describe
                     false // debug
                 ]
             }));
@@ -181,7 +232,7 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
             };
         }
 
-        const stateStr = { undefined: 'Inconclusive', true: 'Success', false: 'Fail' };
+        const stateStr = { undefined: 'Inconclusive', true: 'Success', false: 'Fail', null: 'Running ...' };
         const title = stateStr[testInfo && testInfo.succeed as any];
 
         codeLens.push(new vscode.CodeLens(new vscode.Range(item.line, 0, item.line, title.length), {
@@ -190,16 +241,16 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
             arguments: [
                 document,
                 selector,
-                false,
-                false // debug
+                false, // is describe
+                false  // debug
             ]
         }));
 
         return {
             tests: 1,
             inconclusive: testInfo === undefined ? 1 : 0,
-            succeed: testInfo && testInfo.succeed ? 1 : 0,
-            fail: testInfo && !testInfo.succeed ? 1 : 0
+            succeed: testInfo && testInfo.succeed === true ? 1 : 0,
+            fail: testInfo && testInfo.succeed === false ? 1 : 0
         };
     }
 }

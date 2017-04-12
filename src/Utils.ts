@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { spawn, ChildProcess, SpawnOptions } from 'child_process';
+import { spawn, SpawnOptions } from 'child_process';
 import { config } from './config';
 
 export function trimArray<T>(array: T[]): T[] {
@@ -26,29 +26,6 @@ export function dedupeStrings(array: string[]): string[] {
     const keys = {};
     array.forEach(key => keys[key] = 0);
     return Object.keys(keys);
-}
-
-export function loadJson<T>(file: string) {
-    return new Promise<T>((resolve, reject) => {
-        fs.exists(file, exists => {
-            if (!exists) {
-                reject();
-            }
-
-            fs.readFile(file, 'utf8', (err, data) => {
-                if (err) {
-                    reject(err);
-                }
-
-                try {
-                    const json: T = JSON.parse(data);
-                    resolve(json);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        });
-    });
 }
 
 function nodeJSPath() {
@@ -79,7 +56,6 @@ export async function fork(jsPath: string, args: string[], options: SpawnOptions
     try {
         const execPath = await nodeJSPath();
         args = [jsPath].concat(args);
-        //console.log('spawn: ' + execPath + ' ' + args.join(' '));
         return spawn(execPath, args, options);
     } catch (err) {
         if (err.code === 'ENOENT') {
@@ -92,7 +68,7 @@ export async function fork(jsPath: string, args: string[], options: SpawnOptions
     }
 }
 
-export function envWithNodePath(rootPath: string): { NODE_PATH: string;[key: string]: string; } {
+export function envWithNodePath(rootPath: string): { NODE_PATH: string; [key: string]: string; } {
     return Object.assign({
         NODE_PATH: `${rootPath}${path.sep}node_modules`
     }, config.env);

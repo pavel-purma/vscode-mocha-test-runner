@@ -51,6 +51,7 @@ export function deactivate() {
 
 async function runTest(document: vscode.TextDocument, selector?: string, isDescribe?: boolean, debug?: boolean) {
     try {
+        codeLensProvider.updateCodeLenses(document.fileName, selector);
         const data = await TestRunner.execute(document.fileName, selector, isDescribe, debug);
         if (data) {
             codeLensProvider.updateCodeLenses(data);
@@ -61,6 +62,8 @@ async function runTest(document: vscode.TextDocument, selector?: string, isDescr
 }
 
 async function onDidSaveTextDocument(document: vscode.TextDocument) {
+    codeLensProvider.invalidateCacheForFile(document.fileName);
+
     if (!/\.tests?\.[jt]sx?$/.test(document.fileName)) {
         return;
     }

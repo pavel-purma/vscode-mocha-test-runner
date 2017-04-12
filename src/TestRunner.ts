@@ -235,6 +235,4 @@ export module TestRunner {
                 }));
         }
     }
-
-
 }

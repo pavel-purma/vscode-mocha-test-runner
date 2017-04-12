@@ -18,4 +18,6 @@ and after running all tests:
 
 - Cannot figure out how to start mocha and attach vscode debugger.
 
-- Runner will not recognize new test files - reload required.
+- Runner will not recognize new test files (restart required).
+
+- infinite loop cannot be stopped (restart required).
