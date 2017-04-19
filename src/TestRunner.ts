@@ -77,7 +77,7 @@ export module TestRunner {
             })
         ];
 
-        return fork(path.resolve(module.filename, '../worker/findtests.js'), args, { env: envWithNodePath(rootPath) })
+        return fork(path.resolve(module.filename, '../worker/findtests.js'), args, { env: envWithNodePath(rootPath), cwd: rootPath })
             .then<MochaTestInfo[]>(process => new Promise<any>((resolve, reject) => {
                 const stdoutBuffers = [];
                 const resultJSONBuffers = [];
@@ -196,7 +196,7 @@ export module TestRunner {
         if (debug) {
             // todo: figure out how to fire up mocha tests with vscode debug
         } else {
-            return fork(runTestWorker, args, { env: envWithNodePath(rootPath) })
+            return fork(runTestWorker, args, { env: envWithNodePath(rootPath), cwd: rootPath })
                 .then<MochaTestResult[]>(process => new Promise<any>((resolve, reject) => {
                     if (!outputChannel) {
                         outputChannel = vscode.window.createOutputChannel('Mocha');

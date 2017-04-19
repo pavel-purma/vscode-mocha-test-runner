@@ -2,7 +2,7 @@
   "name": "vscode-mocha-test-runner",
   "displayName": "vscode-mocha-test-runner",
   "description": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "me",
   "engines": {
     "vscode": "^1.10.2"
@@ -48,11 +48,6 @@
         "mocha.compiler": {
           "default": "",
           "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand",
-          "type": "string"
-        },
-        "mocha.watch": {
-          "default": "",
-          "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand - watch mode",
           "type": "string"
         },
         "mocha.setup": {

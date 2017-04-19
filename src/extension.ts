@@ -35,9 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
             { language: 'typescriptreact', pattern: '**/*.test.tsx' },
         ], codeLensProvider));
 
-        if (config.runTestsOnSave) {
-            vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);
-        }
+        vscode.workspace.onDidSaveTextDocument(onDidSaveTextDocument);        
 
         console.log('vscode-mocha-test-runner started');
     } catch (err) {
@@ -68,27 +66,13 @@ async function onDidSaveTextDocument(document: vscode.TextDocument) {
         return;
     }
 
-    if (!config.compiler && !config.watch) {
+    if (!config.compiler) {
         runTest(document);
         return;
     }
 
-    if (config.watch) {
-        if (!compilerWatch) {
-            const compilerPath = path.join('.vscode', config.watch);
-            const process = await fork(compilerPath, [], { cwd: vscode.workspace.rootPath });
-            process.stderr.on('data', data => {
-                if (data === 'compiled') {
-                    runTest(document);
-                }
-            });
-        }
-
-        return;
-    }
-
     const compilerPath = path.join('.vscode', config.compiler);
-    const process = await fork(compilerPath, ['--watch'], { cwd: vscode.workspace.rootPath });
+    const process = await fork(compilerPath, [], { cwd: vscode.workspace.rootPath });
     process.on('exit', (code, signal) => {
         if (code !== 0) {
             return;

@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "build": "webpack --colors --display-error-details",
-    "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
-    "test-watch": "node .\\.vscode\\vscode-mocha-test-runner.watch.js",
-    "test":"mocha .\\.temp --colors --recursive --require .\\.vscode\\vscode-mocha-test-runner.setup.js"
+    "test-build": "node .\\.vscode\\compiler.js",
+    "test-watch": "node .\\.vscode\\watch.js",
+    "test":"mocha .\\.temp --colors --recursive --require .\\.vscode\\setup.js"
   },
   "dependencies": {
     "moment": "^2.17.1",

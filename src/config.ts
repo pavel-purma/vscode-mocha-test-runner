@@ -8,10 +8,8 @@ interface Config {
     };
     env: any;
     compiler: string;
-    watch: string;
     setup: string;
     runTestsOnSave: boolean;
-
 }
 
 export const config: Config = vscode.workspace.getConfiguration('mocha') as any;
