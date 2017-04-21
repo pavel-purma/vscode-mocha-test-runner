@@ -32,7 +32,7 @@ export module TestRunner {
 
         try {
             if (selector) {
-                const grep = '^' + selector.replace(/\//g, ' ') + (isDescribe ? '' : '$');
+                const grep = '^' + escapeRegExp(selector.replace(/\//g, ' ')) + (isDescribe ? '' : '$');
                 return await _runMocha(tests.filter(test => test.fullName.indexOf(selector) === 0).map(test => test.file), grep, debug);
             }
 
