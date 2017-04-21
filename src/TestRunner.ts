@@ -102,9 +102,7 @@ export module TestRunner {
                         }
 
                         if (code) {
-                            const outputChannel = vscode.window.createOutputChannel('Mocha');
-                            outputChannel.show();
-                            outputChannel.append(stderrText);
+                            outputChannel.append('Error: ' + stderrText);
                             console.error(stderrText);
                             reject(new Error('findTests: unknown error'));
                         } else {

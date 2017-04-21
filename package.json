@@ -1,9 +1,10 @@
 {
   "name": "vscode-mocha-test-runner",
   "displayName": "vscode-mocha-test-runner",
-  "description": "",
-  "version": "0.0.2",
-  "publisher": "me",
+  "description": "TEst runner for mocha",
+  "version": "0.0.3",
+  "publisher": "cstechnologies",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.10.2"
   },

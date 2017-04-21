@@ -85,13 +85,12 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
 
             if (!tree) {
                 const sourceFile = ts.createSourceFile(document.fileName, document.getText(), ts.ScriptTarget.Latest, false, ts.ScriptKind.Unknown);
-                tree = sourceFile.statements.map(statement => this._visit(sourceFile, statement)).filter(o => o != null);
+                tree = sourceFile.statements.map(statement => this._visit(sourceFile, statement)).filter(o => o);
                 this._itemsCache[document.fileName] = tree;
             }
 
             let fileIdentifier = path.relative(vscode.workspace.rootPath, document.fileName); // to relative
             fileIdentifier = fileIdentifier.substring(0, fileIdentifier.length - 8); // remove '.test.js'
-
 
             const testsInfo = this._fileTestsInfo && this._fileTestsInfo[fileIdentifier];
 
@@ -110,14 +109,6 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     private _visit(sourceFile: ts.SourceFile, node: ts.Node) {
-        const getLineOfPosition = (pos: number) => {
-            while (/^\s$/.test(sourceFile.text.substr(pos, 1))) {
-                ++pos;
-            }
-
-            return sourceFile.getLineAndCharacterOfPosition(pos).line;
-        };
-
         switch (node.kind) {
             case ts.SyntaxKind.ExpressionStatement: {
                 const obj = node as ts.ExpressionStatement;
@@ -127,30 +118,40 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
             case ts.SyntaxKind.CallExpression: {
                 const obj = node as ts.CallExpression;
                 const name = this._visit(sourceFile, obj.expression);
-                if (name === 'describe') {
-                    let children = this._visit(sourceFile, obj.arguments[1]);
-                    if (!Array.isArray(children)) {
-                        children = [children];
+                switch (name) { 
+                    case 'describe': {
+                        let children = this._visit(sourceFile, obj.arguments[1]);
+                        if (!Array.isArray(children)) {
+                            children = [children];
+                        }
+                        /* known bug: this will return wrong position for this code: (specially when comment is multiline)
+                        * describe /* comment here with word describe in it * /('title', function() { });
+                        *
+                        * wont fix: who would write comment in there in first place??
+                        */
+                        const pos = sourceFile.text.lastIndexOf('describe', obj.arguments[0].pos);
+                        const result = {
+                            name,
+                            line: sourceFile.getLineAndCharacterOfPosition(pos).line,
+                            title: this._visit(sourceFile, obj.arguments[0]),
+                            children
+                        };
+
+                        children.filter(o => o).forEach(o => o.parent = result);
+                        return result;
                     }
-
-                    const result = {
-                        name,
-                        line: getLineOfPosition(obj.pos),
-                        title: this._visit(sourceFile, obj.arguments[0]),
-                        children
-                    };
-
-                    children.forEach(o => o.parent = result);
-                    return result;
-                } else if (name === 'it') {
-                    return {
-                        name,
-                        line: getLineOfPosition(obj.pos),
-                        title: this._visit(sourceFile, obj.arguments[0])
-                    };
+                    case 'it': {
+                        // known bug: same as with describe couple lines above
+                        const pos = sourceFile.text.lastIndexOf('it', obj.arguments[0].pos);
+                        return {
+                            name,
+                            line: sourceFile.getLineAndCharacterOfPosition(pos).line,
+                            title: this._visit(sourceFile, obj.arguments[0])
+                        };
+                    }  
                 }
 
-                break;
+                return null; 
             }
 
             case ts.SyntaxKind.Identifier: {
@@ -174,7 +175,7 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
 
             case ts.SyntaxKind.Block: {
                 const obj = node as ts.Block;
-                return obj.statements.map(statement => this._visit(sourceFile, statement));
+                return obj.statements.map(statement => this._visit(sourceFile, statement)).filter(o => o);
             }
 
             case ts.SyntaxKind.ImportDeclaration:
