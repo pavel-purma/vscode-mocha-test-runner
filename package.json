@@ -64,7 +64,7 @@
       }
     },
     "commands": [{
-        "command": "mochaTestRunner.runAllTests",
+        "command": "vscode-mocha-test-runner.run-all-tests",
         "title": "Mocha test runner - run all tests"
     }]
   },
