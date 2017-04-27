@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "outDir": ".test",
+    "lib": [
+      "es6"
+    ],
+    "sourceMap": true,
+    "rootDir": ".",
+    "watch": true
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

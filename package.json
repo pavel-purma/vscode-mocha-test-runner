@@ -25,11 +25,11 @@
       "properties": {
         "mocha.options": {
           "default": {},
-          "description": "Mocha: Options to run Mocha"
+          "description": "Options to run Mocha"
         },
-        "mocha.files.glob": {
-          "default": "test/**/*.test.js",
-          "description": "Mocha: Glob to search for test files",
+        "mocha.files.rootPath": {
+          "default": "",
+          "description": "Directory with test files",
           "type": "string"
         },
         "mocha.files.ignore": {
@@ -37,29 +37,19 @@
             "**/.git/**/*",
             "**/node_modules/**/*"
           ],
-          "description": "Mocha: Globs to ignore when searching for test files",
+          "description": "Globs to ignore when searching for test files",
           "type": [
             "string"
           ]
         },
         "mocha.env": {
           "default": {},
-          "description": "Mocha: Environment variables to run your tests"
-        },
-        "mocha.compiler": {
-          "default": "",
-          "description": "Mocha: Script for transpiling source file(s) into javascript that mocha will understand",
-          "type": "string"
+          "description": "Environment variables to run your tests"
         },
         "mocha.setup": {
           "default": "",
-          "description": "Mocha: Name of script, that will be imported into mocha.",
+          "description": "Name of script, that will be imported into mocha. (Ex: jsdom init)",
           "type": "string"
-        },
-        "mocha.runTestsOnSave": {
-          "default": true,
-          "description": "Mocha: Automatically executes test on file save",
-          "type": "boolean"
         }
       }
     },

@@ -2,11 +2,11 @@
   "name": "enzyme-project",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "build": "webpack --colors --display-error-details",
-    "test-build": "node .\\.vscode\\compiler.js",
-    "test-watch": "node .\\.vscode\\watch.js",
-    "test":"mocha .\\.temp --colors --recursive --require .\\.vscode\\setup.js"
+  "scripts": {    
+    "test-build": "node .\\.vscode\\test-build.js",
+    "test-watch": "node .\\.vscode\\test-build.js --watch",
+    "test":"mocha .\\.test --colors --recursive --require .\\.vscode\\test-setup.js",
+    "build": "webpack --colors --display-error-details"
   },
   "dependencies": {
     "moment": "^2.17.1",

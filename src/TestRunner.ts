@@ -1,236 +1,148 @@
 import * as vscode from 'vscode';
+import * as Mocha from 'mocha';
 import * as path from 'path';
-import { spawn, ChildProcess, SpawnOptions } from 'child_process';
-import * as fs from 'fs';
-import * as deepExtend from 'deep-extend';
-const escapeRegExp = require('escape-regexp');
-import { FileTestsInfo, TestsInfo, DescribeInfo, ItInfo, MochaTestInfo, MochaTestResult } from './Types';
-import { config } from './config';
-import { dedupeStrings, fork, envWithNodePath } from './Utils';
+import { Glob } from 'glob';
+import { config } from "./config";
+import { TestsResults, getFileSelector } from "./Utils";
 
-export module TestRunner {
-    var tests: MochaTestInfo[] = [];
-    var fileTestsInfo: FileTestsInfo;
-    var currentFile: string;
-    var outputChannel: vscode.OutputChannel;
-
-    export async function execute(document?: string, selector?: string, isDescribe?: boolean, debug?: boolean): Promise<FileTestsInfo> {
-        if (document) {
-            currentFile = path.relative(vscode.workspace.rootPath, document); // to relative
-            currentFile = currentFile.substring(0, currentFile.length - 8); // remove '.test.js'
-        }    
-
-        tests = await _findTests(vscode.workspace.rootPath);
-        if (!tests.length) {
-            vscode.window.showWarningMessage('No tests were found.');
-            return;
-        }
-        
-        if (document) {
-            tests = _filterTests(tests, document);
-        }
-
-        try {
-            if (selector) {
-                const grep = '^' + escapeRegExp(selector.replace(/\//g, ' ')) + (isDescribe ? '' : '$');
-                return await _runMocha(tests.filter(test => test.fullName.indexOf(selector) === 0).map(test => test.file), grep, debug);
-            }
-
-            return await _runMocha(tests.map(test => test.file), undefined, debug);
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to run tests due to ${error.message}`);
-            throw error;
-        }
+export function runTests(grep?: RegExp) {
+    const mocha = createMocha();
+    
+    if (grep) {
+        console.log();
+        console.log('Grep pattern:');
+        console.log('  ' + grep);
+        mocha.grep(grep);
     }
 
-    function _filterTests(tests: MochaTestInfo[], document: string) {
-        let docPart = path.relative(vscode.workspace.rootPath, document);
-        let index = docPart.lastIndexOf('.');
-        index = docPart.lastIndexOf('.', index - 1);
-        docPart = docPart.substr(0, index);
+    return resolveGlob()
+        .then(files => {
+            files.forEach(file => {
+                delete require.cache[file];
+                mocha.addFile(file);
+                console.log('Test file: ' + file);
+            });
 
-        const docTests = tests.filter(o => {
-            let relative = path.relative(vscode.workspace.rootPath, o.file);
-            if (relative.substr(0, 3) === 'out') {
-                relative = relative.substr(4);
-            }
-            return relative.substr(0, relative.length - 8) === docPart;
+            return runMocha(mocha);
         });
+}
 
-        if (docTests.length > 0) {
-            tests = docTests;
-        }
+export function runTestsInFile(filePath: string) {
+    const mocha = createMocha();
 
-        return tests;
+    delete require.cache[filePath];
+    mocha.addFile(filePath);
+
+    return runMocha(mocha);
+}
+
+function createMocha() {
+    let options: {
+        grep?: RegExp;
+        ui?: string;
+        reporter?: string;
+        timeout?: number;
+        reporterOptions?: any;
+        slow?: number;
+        bail?: boolean;
+    } = {};
+
+    if (config.options) {
+        options.grep = config.options.grep;
+        options.ui = config.options.ui;
+        options.reporter = config.options.reporter;
+        options.timeout = config.options.timeout;
+        options.reporterOptions = config.options.reporterOptions;
+        options.slow = config.options.slow;
+        options.bail = config.options.bail;
     }
 
-    function _findTests(rootPath: string) {
-        const args = [
-            JSON.stringify({
-                options: config.options,
-                files: {
-                    glob: config.files.glob,
-                    ignore: config.files.ignore
-                },
-                rootPath,
-                setup: config.setup
-            })
-        ];
-
-        return fork(path.resolve(module.filename, '../worker/findtests.js'), args, { env: envWithNodePath(rootPath), cwd: rootPath })
-            .then<MochaTestInfo[]>(process => new Promise<any>((resolve, reject) => {
-                const stdoutBuffers = [];
-                const resultJSONBuffers = [];
-
-                process.stderr.on('data', data => resultJSONBuffers.push(data));
-                process.stdout.on('data', data => stdoutBuffers.push(data));
-
-                process
-                    .on('error', err => {
-                        vscode.window.showErrorMessage(`Failed to run Mocha due to ${err.message}`);
-                        reject(err);
-                    })
-                    .on('exit', code => {
-                        console.log(Buffer.concat(stdoutBuffers).toString());
-
-                        const stderrText = Buffer.concat(resultJSONBuffers).toString();
-                        let resultJSON: MochaTestInfo[];
-                        try {
-                            resultJSON = stderrText && JSON.parse(stderrText);
-                        } catch (ex) {
-                            code = 1;
-                        }
-
-                        if (code) {
-                            outputChannel.append('Error: ' + stderrText);
-                            console.error(stderrText);
-                            reject(new Error('findTests: unknown error'));
-                        } else {
-                            resolve(resultJSON);
-                        }
-                    });
-            }));
+    const jsonOptions = JSON.stringify(options, null, 2);
+    if (jsonOptions !== '{}') {
+        console.log(`Applying Mocha options:\n${indent(jsonOptions)}`);
+    } else {
+        console.log(`No Mocha options are configured. You can set it under File > Preferences > Workspace Settings.`);
+        options = undefined;
     }
 
-    async function _runMocha(testFiles, grep: string, debug: boolean) {
-        try {
-            const result = await _runTests(dedupeStrings(testFiles), grep, debug);
-            const converted = _convertResult(result);
-            return _mergeResults(converted);
-        } catch (err) {
-            console.error(err);
-        }
+    const mocha = new Mocha(options);
+    if (config.setup) {
+        const file = path.join(vscode.workspace.rootPath, config.setup);
+        delete require.cache[file];
+        mocha.addFile(file);
     }
 
-    function _convertResult(result: any): FileTestsInfo {
-        if (!result) {
-            return {};
-        }
+    mocha.reporter(customReporter);
+    return mocha;
+}
 
-        const output: any = {};
+function runMocha(mocha: Mocha) {
+    return new Promise<TestsResults>(resolve => {
+        mocha.run(failures => {
+            resolve({
+                success: success,
+                fail: fail
+            });
+        });
+    });
+}
 
-        const addPath = (path: string, succeed: boolean) => {
-            let current = output;
-            for (let name of path.split('/')) {
-                let next = current[name];
-                if (!next) {
-                    current[name] = next = {};
-                }
-                current = next;
+let spec: Mocha.reporters.Spec;
+let success: { [file: string]: string[] };
+let fail: { [file: string]: string[] };
+const suitePath: string[] = [];
+
+function customReporter(runner: any, options: any) {
+    spec = new Mocha.reporters.Spec(runner);
+    success = {};
+    fail = {};
+
+    const callback = (target: { [file: string]: string[] }) => {
+        return (test: any) => {
+            const selector = getFileSelector(test.file);
+            let list = target[selector];
+            if (!list) {
+                list = [];
+                target[selector] = list;
             }
-            (current as ItInfo).succeed = succeed;
+            list.push(trimArray(suitePath).concat([test.title]).join(' '));
         };
+    }
 
-        if (result.failed) {
-            for (let item of result.failed) {
-                addPath(item.fullName, false);
+    runner
+        .on('suite', suite => suitePath.push(suite.title))
+        .on('suite end', () => suitePath.pop())
+        .on('pass', callback(success))
+        .on('fail', callback(fail));
+}
+
+function resolveGlob(): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+        const rootPath = path.join(vscode.workspace.rootPath, config.files.rootPath);
+        new Glob('**/*.test.js', { cwd: rootPath, ignore: config.files.ignore }, (err, files) => {
+            if (err) {
+                return reject(err);
             }
-        }
 
-        if (result.passed) {
-            for (let item of result.passed) {
-                addPath(item.fullName, true);
-            }
-        }
+            files = files.map(file => path.resolve(rootPath, file));
+            resolve(files);
+        });
+    });
+}
 
-        return output;
-    }
+function indent(lines) {
+    return lines.split('\n').map(line => `  ${line}`).join('\n');
+}
 
-    function _mergeResults(result: FileTestsInfo): FileTestsInfo {
-        let data: TestsInfo = {};
+function trimArray<T>(array: T[]): T[] {
+    return array.reduce((trimmed, item) => {
+        item && trimmed.push(item);
+        return trimmed;
+    }, []);
+}
 
-        if (fileTestsInfo) {
-            data = fileTestsInfo[currentFile];
-        }
-
-        if (data && result) {
-            deepExtend(data, result);
-        } else {
-            data = result;
-        }
-
-        if (!fileTestsInfo) {
-            fileTestsInfo = {};
-        }
-
-        fileTestsInfo[currentFile] = data;
-        return fileTestsInfo;
-    }
-
-    function _runTests(testFiles: string[], grep: string, debug: boolean): Promise<MochaTestResult[]> {
-        const rootPath = vscode.workspace.rootPath;
-
-        const args = [
-            JSON.stringify({
-                files: testFiles,
-                options: config.options,
-                grep,
-                rootPath,
-                setup: config.setup
-            }),
-        ];
-        const runTestWorker = path.resolve(module.filename, '../worker/runtest.js');
-
-        if (debug) {
-            // todo: figure out how to fire up mocha tests with vscode debug
-        } else {
-            return fork(runTestWorker, args, { env: envWithNodePath(rootPath), cwd: rootPath })
-                .then<MochaTestResult[]>(process => new Promise<any>((resolve, reject) => {
-                    if (!outputChannel) {
-                        outputChannel = vscode.window.createOutputChannel('Mocha');
-                    }
-                    
-                    outputChannel.clear();
-                    outputChannel.appendLine(`Running Mocha with Node.js\n`);
-
-                    const stderrBuffers = [];
-                    process.stderr.on('data', data => stderrBuffers.push(data));
-                    process.stdout.on('data', data => outputChannel.append(data.toString().replace(/\r/g, '')));
-
-                    process
-                        .on('error', err => {
-                            vscode.window.showErrorMessage(`Failed to run Mocha due to ${err.message}`);
-                            outputChannel.append(err.stack);
-                            reject(err);
-                        })
-                        .on('exit', code => {
-                            const stderrText = Buffer.concat(stderrBuffers).toString();
-                            let resultJSON: MochaTestResult[];
-                            try {
-                                resultJSON = stderrText && JSON.parse(stderrText);
-                            } catch (ex) {
-                                code = 1;
-                            }
-
-                            if (code) {
-                                outputChannel.append(stderrText);
-                                console.error(stderrText);
-                                reject(new Error('unknown error'));
-                            } else {
-                                resolve(resultJSON);
-                            }
-                        });
-                }));
-        }
-    }
+function dedupeStrings(array: string[]): string[] {
+    const keys = {};
+    array.forEach(key => keys[key] = 0);
+    return Object.keys(keys);
 }

@@ -7,7 +7,6 @@
         "out": true,
         "**/node_modules/": true
     },
-    "mocha.files.glob": "./.temp/test/**/*.test.js",
-    "mocha.compiler": "compiler.js",
-    "mocha.setup": "setup.js"
+    "mocha.files.rootPath": ".test",
+    "mocha.setup": ".vscode/test-setup.js"
 }

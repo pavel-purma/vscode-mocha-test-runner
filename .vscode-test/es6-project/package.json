@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
-    "test": "mocha ./.temp/test/Foo.test.js",
+    "test-build": "babel --out-dir .test --ignore=node_modules,dist .",
+    "test-watch": "babel --out-dir .test --ignore=node_modules,dist --watch .",
+    "test":"mocha .\\.test --colors --recursive",   
     "build": "babel src --out-dir dist"
   },
   "devDependencies": {

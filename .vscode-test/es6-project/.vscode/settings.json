@@ -6,6 +6,5 @@
     "search.exclude": {
         "**/node_modules/": true
     },
-    "mocha.files.glob": ".temp/test/**/*.test.js",
-    "mocha.compiler": "vscode-mocha-test-runner.compiler.js"
+    "mocha.files.rootPath": ".test",
 }

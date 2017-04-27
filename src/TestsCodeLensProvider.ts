@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import * as ts from "typescript";
+import * as path from 'path';
+import { FileTestStates, TestStates, TestState, getDocumentSelector } from "./Utils";
+const escapeRegExp = require('escape-regexp');
 
 export class TestsCodeLensProvider implements vscode.CodeLensProvider {
     constructor() {
@@ -11,9 +14,14 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
     private _testStates: FileTestStates;
     private _eventEmitter: vscode.EventEmitter<void>;
 
-    updateTestStates(fileName: string, newValues: TestStates) {
-        const testStates = this._testStates[fileName];
-        this._testStates[fileName] = testStates ? { ...testStates, ...newValues } : newValues;
+    updateTestStates(fileSelector: string, newValues: TestStates) {
+        const testStates = this._testStates[fileSelector];
+        this._testStates[fileSelector] = testStates ? { ...testStates, ...newValues } : newValues;
+        this._eventEmitter.fire(null);
+    }
+
+    updateFileTestStates(fileTestStates: FileTestStates) {
+        this._testStates = this._testStates ? { ...this._testStates, ...fileTestStates } : fileTestStates;
         this._eventEmitter.fire(null);
     }
 
@@ -22,12 +30,14 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CodeLens[]> {
-        if (document.isDirty || this._items[document.fileName] === undefined) {
+        const selector = getDocumentSelector(document);
+        if (document.isDirty || this._items[selector] === undefined) {
             const sourceFile = ts.createSourceFile(document.fileName, document.getText(), ts.ScriptTarget.Latest, false, ts.ScriptKind.Unknown);
-            this._items[document.fileName] = sourceFile.statements.map(statement => visit(sourceFile, statement)).filter(o => o);
+            this._items[selector] = sourceFile.statements.map(statement => visitor(sourceFile, statement)).filter(o => o);
         }
-        const testStates = this._testStates[document.fileName] || {};
-        const items = this._items[document.fileName];
+
+        const testStates = this._testStates[selector] || {};
+        const items = this._items[selector];
         const result: vscode.CodeLens[] = [];
         for (let i = 0; i < items.length; ++i) {
             createCodeLens(testStates, document, result, items[i]);
@@ -41,42 +51,34 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
             return null;
         }
 
-        if ((codeLens instanceof DescribeCodeLens && codeLens.state === 'Running') ||
-            (codeLens instanceof ItCodeLens && codeLens.state === 'Running')) {
-            codeLens.command = {
-                title: codeLens.title,
-                command: 'vscode-mocha-test-runner.noop',
-                arguments: [codeLens]
-            };
-        } else {
-            codeLens.command = {
-                title: codeLens.title,
-                command: 'vscode-mocha-test-runner.run-test',
-                arguments: [codeLens]
-            };
-        }
+        codeLens.command = {
+            title: codeLens.title,
+            command: 'vscode-mocha-test-runner.run-test',
+            arguments: [codeLens]
+        };
 
         return codeLens;
     }
 }
 
-type TestState = 'Inconclusive' | 'Running' | 'Success' | 'Fail';
-
-export type TestStates = { [title: string]: TestState };
-export type FileTestStates = { [fileName: string]: TestStates };
-
 export abstract class TestCodeLensBase extends vscode.CodeLens {
-    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string) {
+    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState) {
         super(range);
         this._document = document;
         this._selector = selector;
+        this._state = state;
     }
 
     private _document: vscode.TextDocument;
     private _selector: string;
+    private _state: TestState;
 
     get document(): vscode.TextDocument {
         return this._document;
+    }
+
+    get selector(): string {
+        return this._selector;
     }
 
     abstract get title(): string;
@@ -84,65 +86,69 @@ export abstract class TestCodeLensBase extends vscode.CodeLens {
     get selectors(): string[] {
         return [this._selector];
     }
-}
-
-class DescribeCodeLens extends TestCodeLensBase {
-    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState, selectors: string[]) {
-        super(range, document, selector);
-        this._state = state;
-        this._selectors = selectors;
-    }
-
-    private _state: TestState;
-    private _selectors: string[];
 
     get state(): TestState {
         return this._state;
     }
+
+    abstract get grep(): RegExp;
+
+}
+
+type DescribeItem = { name: 'describe'; line: number; title: string; parent: DescribeItem; children: Item[]; }
+type ItItem = { name: 'it'; line: number; title: string; parent: DescribeItem; }
+type Item = DescribeItem | ItItem;
+type createCodeLensResult = { tests: number, inconclusive: string[], running: string[], success: string[], fail: string[] };
+
+class DescribeCodeLens extends TestCodeLensBase {
+    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState, selectors: string[]) {
+        super(range, document, selector, state);
+        this._selectors = selectors;
+    }
+
+    private _selectors: string[];
 
     get selectors(): string[] {
         return this._selectors;
     }
 
     get title(): string {
-        return this._selectors.length + ' ' + this._state;
+        return this._selectors.length + ' ' + this.state;
     }
+
+    get grep() {
+        return new RegExp('^(' + this.selectors.map(o => escapeRegExp(o)).join('|') + ')$', 'i');
+    }
+
 }
 
 class ItCodeLens extends TestCodeLensBase {
     constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState) {
-        super(range, document, selector);
-        this._state = state;
-    }
-
-    private _state: TestState;
-
-    get state(): TestState {
-        return this._state;
+        super(range, document, selector, state);
     }
 
     get title(): string {
-        return this._state;
+        return this.state;
+    }
+
+    get grep() {
+        return new RegExp('^' + escapeRegExp(this.selector) + '$', 'i');
     }
 }
 
-type DescribeItem = { name: 'describe'; line: number; title: string; parent: DescribeItem; children: Item[]; }
-type ItItem = { name: 'it'; line: number; title: string; parent: DescribeItem; }
-type Item = DescribeItem | ItItem;
-
-function visit(sourceFile: ts.SourceFile, node: ts.Node) {
+function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
     switch (node.kind) {
         case ts.SyntaxKind.ExpressionStatement: {
             const obj = node as ts.ExpressionStatement;
-            return visit(sourceFile, obj.expression);
+            return visitor(sourceFile, obj.expression);
         }
 
         case ts.SyntaxKind.CallExpression: {
             const obj = node as ts.CallExpression;
-            const name = visit(sourceFile, obj.expression);
+            const name = visitor(sourceFile, obj.expression);
             switch (name) {
                 case 'describe': {
-                    let children = visit(sourceFile, obj.arguments[1]);
+                    let children = visitor(sourceFile, obj.arguments[1]);
                     if (!Array.isArray(children)) {
                         children = [children];
                     }
@@ -153,7 +159,7 @@ function visit(sourceFile: ts.SourceFile, node: ts.Node) {
                     const result = {
                         name,
                         line: sourceFile.getLineAndCharacterOfPosition(pos).line,
-                        title: visit(sourceFile, obj.arguments[0]),
+                        title: visitor(sourceFile, obj.arguments[0]),
                         children
                     };
 
@@ -169,7 +175,7 @@ function visit(sourceFile: ts.SourceFile, node: ts.Node) {
                     return {
                         name,
                         line: sourceFile.getLineAndCharacterOfPosition(pos).line,
-                        title: visit(sourceFile, obj.arguments[0])
+                        title: visitor(sourceFile, obj.arguments[0])
                     } as ItItem;
                 }
             }
@@ -190,7 +196,7 @@ function visit(sourceFile: ts.SourceFile, node: ts.Node) {
         case ts.SyntaxKind.FunctionExpression: {
             const obj = node as ts.FunctionExpression;
             if (obj.parameters.length === 0) {
-                return visit(sourceFile, obj.body);
+                return visitor(sourceFile, obj.body);
             }
 
             break;
@@ -198,7 +204,7 @@ function visit(sourceFile: ts.SourceFile, node: ts.Node) {
 
         case ts.SyntaxKind.Block: {
             const obj = node as ts.Block;
-            return obj.statements.map(statement => visit(sourceFile, statement)).filter(o => o);
+            return obj.statements.map(statement => visitor(sourceFile, statement)).filter(o => o);
         }
 
         case ts.SyntaxKind.ImportDeclaration:
@@ -214,13 +220,11 @@ function visit(sourceFile: ts.SourceFile, node: ts.Node) {
     }
 }
 
-type createCodeLensResult = { tests: number, inconclusive: string[], running: string[], success: string[], fail: string[] };
-
 function createCodeLens(testStates: { [title: string]: TestState }, document: vscode.TextDocument, codeLens: vscode.CodeLens[], item: Item, parentSelector?: string): createCodeLensResult {
     let selector = item.title;
 
     if (parentSelector) {
-        selector = parentSelector + '/' + selector;
+        selector = parentSelector + ' ' + selector;
     }
 
     if (item.name === 'it') {

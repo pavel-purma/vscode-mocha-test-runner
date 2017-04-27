@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test-build": "node .\\.vscode\\vscode-mocha-test-runner.compiler.js",
-    "test": "mocha ./.temp/test/math.test.js",
+    "test-build": "node .\\.vscode\\test-build.js",
+    "test-watch": "node .\\.vscode\\test-build.js --watch",
+    "test":"mocha .\\.test --colors --recursive",
     "build": "tsc"
   },
   "devDependencies": {
