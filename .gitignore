@@ -2,4 +2,4 @@
 /out
 npm-debug.log
 /*.vsix
-symbols.json
+.vscode/symbols.json

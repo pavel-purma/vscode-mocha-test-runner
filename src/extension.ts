@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { TestsCodeLensProvider, TestCodeLensBase } from "./TestsCodeLensProvider";
-import { FileTestStates, TestState, TestsResults, TestStates } from "./Utils";
+import { FileTestStates, TestState, TestsResults, TestStates, languages } from "./Utils";
 import { runTests, runTestsInFile } from "./TestRunner";
 import { config } from "./config";
-import { commandRunTests, commandRunAllTests } from "./commands";
+import { commandRunTests, commandRunAllTests, commandRunFileTests } from "./commands";
 
 export let codeLensProvider: TestsCodeLensProvider;
 export let outputChannel: vscode.OutputChannel;
@@ -15,17 +15,12 @@ let compilerWatch;
 export function activate(context: vscode.ExtensionContext) {
     try {
         codeLensProvider = new TestsCodeLensProvider();
-        outputChannel = vscode.window.createOutputChannel('Mocha test runner');
+        outputChannel = vscode.window.createOutputChannel('Mocha test runner');        
+        outputChannel.show();
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-test', commandRunTests));
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-all-tests', commandRunAllTests));
-
-        context.subscriptions.push(vscode.languages.registerCodeLensProvider([
-            { language: 'javascript', pattern: '**/*.test.js' },
-            { language: 'javascriptreact', pattern: '**/*.test.jsx' },
-            { language: 'typescript', pattern: '**/*.test.ts' },
-            { language: 'typescriptreact', pattern: '**/*.test.tsx' },
-        ], codeLensProvider));
-
+        context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-file-tests', commandRunFileTests));
+        context.subscriptions.push(vscode.languages.registerCodeLensProvider(languages, codeLensProvider));
         console.log('vscode-mocha-test-runner started');
     } catch (err) {
         console.error(err);

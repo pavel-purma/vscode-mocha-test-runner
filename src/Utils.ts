@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { config } from "./config";
 
-export type TestsResults = { success: { [file: string]: string[] }, fail: { [file: string]: { selector: string, err: any }[] } };
+export type TestsResults = { [file: string]: TestResult[] };
+export type TestResult = { selector: string[], err?: any };
 export type TestState = 'Inconclusive' | 'Running' | 'Success' | 'Fail';
 export type TestStates = { [title: string]: TestState };
 export type FileTestStates = { [fileName: string]: TestStates };
@@ -17,3 +18,10 @@ export function getDocumentSelector(document: vscode.TextDocument) {
     selector = path.join(config.files.rootPath, selector);
     return selector.substring(0, selector.lastIndexOf('.'));
 }
+
+export const languages = [
+    { language: 'javascript', pattern: '**/*.test.js' },
+    { language: 'javascriptreact', pattern: '**/*.test.jsx' },
+    { language: 'typescript', pattern: '**/*.test.ts' },
+    { language: 'typescriptreact', pattern: '**/*.test.tsx' }
+];

@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as diff from 'diff';
+import * as minimatch from 'minimatch';
 import { TestCodeLensBase } from "./TestsCodeLensProvider";
-import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, getDocumentSelector } from "./Utils";
+import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, getDocumentSelector, TestResult, languages } from "./Utils";
 import { runTests } from "./TestRunner";
 import { codeLensProvider, outputChannel } from "./extension";
 import { config } from "./config";
-import { AssertionError } from "assert";
+type TestContext = { lines: string[], passing: number, failing: number };
 
 export function commandRunTests(codeLens: TestCodeLensBase) {
     if (codeLens.state === 'Running') {
         return;
     }
+
     outputChannel.clear();
 
     if (codeLens.document.isDirty) {
@@ -22,10 +24,31 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
 
     const selector = getDocumentSelector(codeLens.document);
 
-    updateTestStates(selector, codeLens.selectors);
+    const states: TestStates = {};
+    for (var i = 0; i < codeLens.selectors.length; ++i) {
+        states[codeLens.selectors[i]] = 'Running';
+    }
+    codeLensProvider.updateTestStates(selector, states);
 
     runTests(codeLens.grep)
-        .then(results => updateTestStates(selector, codeLens.selectors, results));
+        .then(results => {
+            const context = {
+                lines: [],
+                failing: 0,
+                passing: 0
+            };
+
+            updateTestStates(context, states, selector, results[selector], codeLens.selectors);
+            codeLensProvider.updateTestStates(selector, states);
+
+            outputChannel.appendLine(context.passing + ' passing');
+            outputChannel.appendLine(context.failing + ' failing');
+            outputChannel.appendLine('');
+
+            for (let line of context.lines) {
+                outputChannel.appendLine(line);
+            }
+        });
 }
 
 export function commandRunAllTests() {
@@ -33,106 +56,136 @@ export function commandRunAllTests() {
 
     runTests()
         .then(results => {
-            const states: FileTestStates = {};
-            const doUpdateFail = (files: { [file: string]: { selector: string, err: any }[] }) => {
-                const keys = Object.keys(files);
-                for (let i = 0; i < keys.length; ++i) {
-                    const file = keys[i];
-                    const selector = getFileSelector(file);
-                    let fileStates = states[file];
-                    if (!fileStates) {
-                        fileStates = {};
-                        states[file] = fileStates;
-                    }
+            const fileStates: FileTestStates = {};
 
-                    const tests = files[file];
-                    for (var j = 0; j < tests.length; ++j) {
-                        fileStates[tests[j].selector] = 'Fail';
-                        appendFailToOutputChannel(j + 1, tests[j]);
-                    }
-                }
+            const context = {
+                lines: [],
+                failing: 0,
+                passing: 0
             };
 
-            const doUpdateSuccess = (files: { [file: string]: string[] }) => {
-                const keys = Object.keys(files);
-                for (let i = 0; i < keys.length; ++i) {
-                    const file = keys[i];
-                    const selector = getFileSelector(file);
-                    let fileStates = states[file];
-                    if (!fileStates) {
-                        fileStates = {};
-                        states[file] = fileStates;
-                    }
-
-                    const tests = files[file];
-                    for (var j = 0; j < tests.length; ++j) {
-                        fileStates[tests[j]] = 'Success';
-                    }
+            const keys = Object.keys(results);
+            for (let selector of keys) {
+                let states = fileStates[selector];
+                if (!states) {
+                    states = {};
+                    fileStates[selector] = states;
                 }
-            };
 
-            doUpdateFail(results.fail);
-            doUpdateSuccess(results.success);
-            codeLensProvider.updateFileTestStates(states)
+                updateTestStates(context, states, selector, results[selector]);
+            }
+
+            codeLensProvider.updateFileTestStates(fileStates);
+
+            outputChannel.appendLine(context.passing + ' passing');
+            outputChannel.appendLine(context.failing + ' failing');
+            outputChannel.appendLine('');
+
+            for (let line of context.lines) {
+                outputChannel.appendLine(line);
+            }
         });
 }
 
-function updateTestStates(fileSelector: string, selectors: string[], results?: TestsResults) {
-    const states: TestStates = {};
-
-    const doUpdate = (state: TestState, selectors: string[]) => {
-        if (!selectors) {
-            return;
-        }
-
-        for (var i = 0; i < selectors.length; ++i) {
-            states[selectors[i]] = state;
-        }
-    };
-
-    if (results) {
-        doUpdate('Inconclusive', selectors);
-        if (results.fail) {
-            const fail = results.fail[fileSelector];
-            if (fail) {
-                doUpdate('Fail', fail.map(o => o.selector));
-                for (let i = 0; i < fail.length; ++i) {
-                    appendFailToOutputChannel(i + 1, fail[i]);
-                }
-            }
-        }
-        results.success && doUpdate('Success', results.success[fileSelector]);
-    } else {
-        doUpdate('Running', selectors);
+export function commandRunFileTests() { 
+    outputChannel.clear();
+    
+    if (!vscode.window.activeTextEditor) { 
+        outputChannel.appendLine('run-file-tests: No active editor');
+        return;
     }
 
-    codeLensProvider.updateTestStates(fileSelector, states);
+    const document = vscode.window.activeTextEditor.document;    
+    if (!document || languages.findIndex(o => o.language === document.languageId && minimatch(document.fileName, o.pattern, { dot: true })) === -1) { 
+        outputChannel.appendLine('run-file-tests: Active document is not valid test file.');
+        return;
+    }
+
+    if (document.isDirty) {
+        document.save();
+    }
+
+    const selector = getDocumentSelector(document);
+
+    const states: TestStates = {};
+    runTests(undefined, [selector])
+        .then(results => {
+            const context = {
+                lines: [],
+                failing: 0,
+                passing: 0
+            };
+
+            updateTestStates(context, states, selector, results[selector]);
+            codeLensProvider.updateTestStates(selector, states);
+
+            outputChannel.appendLine(context.passing + ' passing');
+            outputChannel.appendLine(context.failing + ' failing');
+            outputChannel.appendLine('');
+
+            for (let line of context.lines) {
+                outputChannel.appendLine(line);
+            }
+        });
 }
 
-function appendFailToOutputChannel(index: number, item: { selector: string, err: any }) {
-    outputChannel.appendLine('  ' + index + ') ' + item.selector + ':');
+function updateTestStates(context: TestContext, states: TestStates, fileSelector: string, results: TestResult[], selectors?: string[]) {
+    outputChannel.appendLine(fileSelector + ':');
+
+    if (selectors) {
+        for (var i = 0; i < selectors.length; ++i) {
+            states[selectors[i]] = 'Inconclusive';
+        }
+    }
+
+    let prev = '';
+    for (let i = 0; i < results.length; ++i) {
+        const test = results[i];
+        const actual = test.selector.slice(0, -1).join(' ');
+        if (actual !== prev) {
+            prev = actual;
+            const title = test.selector.length > 2 ? test.selector[test.selector.length - 2] : test.selector[test.selector.length - 1];
+            outputChannel.appendLine(Array(test.selector.length).join('  ') + title);
+        }
+
+        if (!test.err) {
+            states[test.selector.join(' ')] = 'Success';
+            outputChannel.appendLine(Array(test.selector.length + 1).join('  ') + '√  ' + test.selector[test.selector.length - 1]);
+            ++context.passing;
+        } else {
+            states[test.selector.join(' ')] = 'Fail';
+            outputChannel.appendLine(Array(test.selector.length + 1).join('  ') + (++context.failing) + ') ' + test.selector[test.selector.length - 1]);
+            pushFailInfo(context.lines, context.failing, test);
+        }
+    }
+
     outputChannel.appendLine('');
+}
+
+function pushFailInfo(lines: string[], index: number, item: TestResult) {
+    lines.push('  ' + index + ') ' + item.selector.join(' ') + ':');
+    lines.push('');
 
     // if (item.err instanceof AssertionError) { // this is not working ...
     if (item.err.stack && item.err.stack.substr(0, 'AssertionError'.length) === 'AssertionError') {
-        outputChannel.appendLine('    AssertionError:' + item.err.message);
+        lines.push('    AssertionError: ' + item.err.message);
         if (item.err.hasOwnProperty('actual') || item.err.hasOwnProperty('expected')) {
-            outputChannel.appendLine(unifiedDiff(item.err, true));
+            lines.push(unifiedDiff(item.err, true));
         }
-        outputChannel.appendLine('');
         const endl = item.err.stack.indexOf('\n') + 1;
-        outputChannel.appendLine(item.err.stack.substr(endl));
+        lines.push(item.err.stack.substr(endl));
     } else {
-        outputChannel.appendLine('    Error:' + item.err.message);
+        lines.push('    Error:' + item.err.message);
     }
-    outputChannel.appendLine('');
+
+    lines.push('');
 }
 
 function unifiedDiff(err, escape) {
     var indent = '      ';
     function cleanUp(line) {
         if (escape) {
-            line = escapeInvisibles(line);
+            line = line.replace(/\t/g, '<tab>').replace(/\r/g, '<CR>').replace(/\n/g, '<LF>\n');
         }
         if (line[0] === '+') {
             return indent + colorLines('diff added', line);
@@ -158,12 +211,6 @@ function unifiedDiff(err, escape) {
         colorLines('diff removed', '- actual') +
         '\n\n' +
         lines.map(cleanUp).filter(notBlank).join('\n');
-}
-
-function escapeInvisibles(line) {
-    return line.replace(/\t/g, '<tab>')
-        .replace(/\r/g, '<CR>')
-        .replace(/\n/g, '<LF>\n');
 }
 
 function colorLines(name, str) {

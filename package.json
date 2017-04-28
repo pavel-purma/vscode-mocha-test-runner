@@ -2,7 +2,7 @@
   "name": "vscode-mocha-test-runner",
   "displayName": "Mocha test runner",
   "description": "Code lens provider and runner for mocha unit tests.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "cstechnologies",
   "icon": "images/icon.png",
   "repository": {
@@ -16,6 +16,8 @@
     "Other"
   ],
   "activationEvents": [
+    "onCommand:vscode-mocha-test-runner.run-all-tests",
+    "onCommand:vscode-mocha-test-runner.run-file-tests",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
@@ -27,13 +29,33 @@
       "type": "object",
       "title": "Mocha options",
       "properties": {
-        "mocha.options": {
+        "mocha.options.ui": {
+          "default": "",
+          "type":"string",
+          "description": "Option passed to Mocha"
+        },
+        "mocha.options.timeout": {
+          "default": 2000,
+          "type":"number",
+          "description": "Option passed to Mocha"
+        },
+        "mocha.options.slow": {
+          "default": 200,
+          "type":"number",
+          "description": "Option passed to Mocha"
+        },
+        "mocha.options.bail": {
+          "default": false,
+          "type":"boolean",
+          "description": "Option passed to Mocha"
+        },
+        "mocha.env": {
           "default": {},
-          "description": "Options to run Mocha"
+          "description": "Environment variables to run your tests"
         },
         "mocha.files.rootPath": {
           "default": "",
-          "description": "Directory with test files",
+          "description": "Directory with test files relatice to root path",
           "type": "string"
         },
         "mocha.files.ignore": {
@@ -46,21 +68,33 @@
             "string"
           ]
         },
-        "mocha.env": {
-          "default": {},
-          "description": "Environment variables to run your tests"
-        },
-        "mocha.setup": {
-          "default": "",
-          "description": "Name of script, that will be imported into mocha. (Ex: jsdom init)",
-          "type": "string"
-        }
+        "mocha.files.setup": {
+          "default": [],
+          "description": "Name of scripts, that will be imported into mocha. (Ex: jsdom init script)",
+          "type": [
+            "string"
+          ]
+        }        
       }
     },
     "commands": [
       {
         "command": "vscode-mocha-test-runner.run-all-tests",
         "title": "Mocha test runner - run all tests"
+      },
+      {
+        "command": "vscode-mocha-test-runner.run-file-tests",
+        "title": "Mocha test runner - run all tests in current file"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "vscode-mocha-test-runner.run-all-tests",
+        "key": "ctrl+R ctrl+T"
+      },
+      {
+        "command": "vscode-mocha-test-runner.run-file-tests",
+        "key": "ctrl+R ctrl+F"
       }
     ]
   },
@@ -82,6 +116,7 @@
     "@types/chai": "^3.4.35",
     "@types/deep-extend": "^0.4.30",
     "@types/diff": "0.0.31",
+    "@types/glob": "^5.0.30",
     "@types/mocha": "^2.2.40",
     "@types/node": "^7.0.12",
     "@types/source-map": "^0.5.0"

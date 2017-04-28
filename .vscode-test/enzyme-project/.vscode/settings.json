@@ -8,5 +8,7 @@
         "**/node_modules/": true
     },
     "mocha.files.rootPath": ".test",
-    "mocha.setup": ".vscode/test-setup.js"
+    "mocha.files.setup": [
+        ".vscode/test-setup.js"
+    ]
 }

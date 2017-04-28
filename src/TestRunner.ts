@@ -5,7 +5,7 @@ import { Glob } from 'glob';
 import { config } from "./config";
 import { TestsResults, getFileSelector } from "./Utils";
 
-export function runTests(grep?: RegExp) {
+export function runTests(grep?: RegExp, fileSelectors?: string[]) {
     const mocha = createMocha();
 
     if (grep) {
@@ -17,6 +17,13 @@ export function runTests(grep?: RegExp) {
 
     return resolveGlob()
         .then(files => {
+            if (fileSelectors) { 
+                files = files.filter(file => {
+                    const selector = getFileSelector(file);
+                    return fileSelectors.indexOf(selector) !== -1;
+                });
+            }
+
             files.forEach(file => {
                 delete require.cache[file];
                 mocha.addFile(file);
@@ -48,11 +55,8 @@ function createMocha() {
     } = {};
 
     if (config.options) {
-        options.grep = config.options.grep;
         options.ui = config.options.ui;
-        options.reporter = config.options.reporter;
         options.timeout = config.options.timeout;
-        options.reporterOptions = config.options.reporterOptions;
         options.slow = config.options.slow;
         options.bail = config.options.bail;
     }
@@ -66,10 +70,12 @@ function createMocha() {
     }
 
     const mocha = new Mocha(options);
-    if (config.setup) {
-        const file = path.join(vscode.workspace.rootPath, config.setup);
-        delete require.cache[file];
-        mocha.addFile(file);
+    if (config.files.setup) {
+        for (let setup of config.files.setup) {
+            const file = path.join(vscode.workspace.rootPath, setup);
+            delete require.cache[file];
+            mocha.addFile(file);
+        }        
     }
 
     mocha.reporter(customReporter);
@@ -79,37 +85,42 @@ function createMocha() {
 function runMocha(mocha: Mocha) {
     return new Promise<TestsResults>(resolve => {
         mocha.run(failures => {
-            resolve({
-                success: success,
-                fail: fail
-            });
+            const keys = Object.keys(results);
+            for (let key of keys) { 
+                results[key].sort((a, b) => { 
+                    const sa = a.selector.join(' ');
+                    const sb = b.selector.join(' ');
+                    return a < b ? -1 : a > b ? 1 : 0;
+                });
+            }
+            resolve(results);
         });
     });
 }
 
 let spec: Mocha.reporters.Spec;
-let success: { [file: string]: string[] };
-let fail: { [file: string]: { selector: string, err: any }[] };
+let results: TestsResults;
 const suitePath: string[] = [];
 
 function customReporter(runner: any, options: any) {
     spec = new Mocha.reporters.Spec(runner);
-    success = {};
-    fail = {};
+    results = {};
 
     runner
         .on('suite', suite => suitePath.push(suite.title))
         .on('suite end', () => suitePath.pop())
         .on('pass', (test: any) => {
             const selector = getFileSelector(test.file);
-            success[selector] = success[selector] || [];
-            success[selector].push(trimArray(suitePath).concat([test.title]).join(' '));
+            results[selector] = results[selector] || [];
+            results[selector].push({
+                selector: trimArray(suitePath).concat([test.title]),
+            });
         })
         .on('fail', (test: any, err: any) => {
             const selector = getFileSelector(test.file);
-            fail[selector] = fail[selector] || [];
-            fail[selector].push({
-                selector: trimArray(suitePath).concat([test.title]).join(' '),
+            results[selector] = results[selector] || [];
+            results[selector].push({
+                selector: trimArray(suitePath).concat([test.title]),
                 err
             });
         });
