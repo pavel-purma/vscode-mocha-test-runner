@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as diff from 'diff';
 import { TestCodeLensBase } from "./TestsCodeLensProvider";
 import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, getDocumentSelector } from "./Utils";
 import { runTests } from "./TestRunner";
@@ -116,18 +117,82 @@ function appendFailToOutputChannel(index: number, item: { selector: string, err:
     if (item.err.stack && item.err.stack.substr(0, 'AssertionError'.length) === 'AssertionError') {
         outputChannel.appendLine('    AssertionError:' + item.err.message);
         if (item.err.hasOwnProperty('actual') || item.err.hasOwnProperty('expected')) {
-            outputChannel.appendLine('    + expected - actual');
-            outputChannel.appendLine('');
-            outputChannel.appendLine('    -' + item.err.actual);
-            outputChannel.appendLine('    +' + item.err.expected);
+            outputChannel.appendLine(unifiedDiff(item.err, true));
         }
-
         outputChannel.appendLine('');
-
         const endl = item.err.stack.indexOf('\n') + 1;
         outputChannel.appendLine(item.err.stack.substr(endl));
     } else {
         outputChannel.appendLine('    Error:' + item.err.message);
     }
     outputChannel.appendLine('');
+}
+
+function unifiedDiff(err, escape) {
+    var indent = '      ';
+    function cleanUp(line) {
+        if (escape) {
+            line = escapeInvisibles(line);
+        }
+        if (line[0] === '+') {
+            return indent + colorLines('diff added', line);
+        }
+        if (line[0] === '-') {
+            return indent + colorLines('diff removed', line);
+        }
+        if (line.match(/@@/)) {
+            return null;
+        }
+        if (line.match(/\\ No newline/)) {
+            return null;
+        }
+        return indent + line;
+    }
+    function notBlank(line) {
+        return typeof line !== 'undefined' && line !== null;
+    }
+    var msg = diff.createPatch('string', err.actual, err.expected, undefined, undefined);
+    var lines = msg.split('\n').splice(4);
+    return '\n      ' +
+        colorLines('diff added', '+ expected') + ' ' +
+        colorLines('diff removed', '- actual') +
+        '\n\n' +
+        lines.map(cleanUp).filter(notBlank).join('\n');
+}
+
+function escapeInvisibles(line) {
+    return line.replace(/\t/g, '<tab>')
+        .replace(/\r/g, '<CR>')
+        .replace(/\n/g, '<LF>\n');
+}
+
+function colorLines(name, str) {
+    return str.split('\n').map(function (str) {
+        return color(name, str);
+    }).join('\n');
+}
+
+function color(type, str) {
+    var colors = {
+        pass: 90,
+        fail: 31,
+        'bright pass': 92,
+        'bright fail': 91,
+        'bright yellow': 93,
+        pending: 36,
+        suite: 0,
+        'error title': 0,
+        'error message': 31,
+        'error stack': 90,
+        checkmark: 32,
+        fast: 90,
+        medium: 33,
+        slow: 31,
+        green: 32,
+        light: 90,
+        'diff gutter': 90,
+        'diff added': 32,
+        'diff removed': 31
+    };
+    return '\u001b[' + colors[type] + 'm' + str + '\u001b[0m';
 }

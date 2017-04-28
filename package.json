@@ -2,7 +2,7 @@
   "name": "vscode-mocha-test-runner",
   "displayName": "Mocha test runner",
   "description": "Code lens provider and runner for mocha unit tests.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "cstechnologies",
   "icon": "images/icon.png",
   "repository": {
@@ -57,10 +57,12 @@
         }
       }
     },
-    "commands": [{
+    "commands": [
+      {
         "command": "vscode-mocha-test-runner.run-all-tests",
         "title": "Mocha test runner - run all tests"
-    }]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
@@ -76,10 +78,11 @@
     "escape-regexp": "0.0.1",
     "typescript": "^2.2.2"
   },
-  "devDependencies": {   
+  "devDependencies": {
     "@types/chai": "^3.4.35",
-    "@types/mocha": "^2.2.40",   
-    "@types/deep-extend": "^0.4.30",    
+    "@types/deep-extend": "^0.4.30",
+    "@types/diff": "0.0.31",
+    "@types/mocha": "^2.2.40",
     "@types/node": "^7.0.12",
     "@types/source-map": "^0.5.0"
   }
