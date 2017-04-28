@@ -11,6 +11,7 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
     if (codeLens.state === 'Running') {
         return;
     }
+    outputChannel.clear();
 
     if (codeLens.document.isDirty) {
         codeLens.document.save();
@@ -27,6 +28,8 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
 }
 
 export function commandRunAllTests() {
+    outputChannel.clear();
+
     runTests()
         .then(results => {
             const states: FileTestStates = {};
@@ -85,35 +88,46 @@ function updateTestStates(fileSelector: string, selectors: string[], results?: T
             states[selectors[i]] = state;
         }
     };
-    
+
     if (results) {
         doUpdate('Inconclusive', selectors);
-        if (results.fail) { 
+        if (results.fail) {
             const fail = results.fail[fileSelector];
             if (fail) {
                 doUpdate('Fail', fail.map(o => o.selector));
                 for (let i = 0; i < fail.length; ++i) {
                     appendFailToOutputChannel(i + 1, fail[i]);
-                }    
-            }    
+                }
+            }
         }
         results.success && doUpdate('Success', results.success[fileSelector]);
-    } else { 
+    } else {
         doUpdate('Running', selectors);
     }
-    
+
     codeLensProvider.updateTestStates(fileSelector, states);
 }
 
 function appendFailToOutputChannel(index: number, item: { selector: string, err: any }) {
     outputChannel.appendLine('  ' + index + ') ' + item.selector + ':');
     outputChannel.appendLine('');
-    outputChannel.appendLine('    AssertionError:' + item.err.message);
-    outputChannel.appendLine('    + expected - actual');
-    outputChannel.appendLine('');
-    outputChannel.appendLine('    -' + item.err.actual);
-    outputChannel.appendLine('    +' + item.err.expected);
-    const endl = item.err.stack.indexOf('\n');
-    outputChannel.appendLine(item.err.stack.substr(endl));
+
+    // if (item.err instanceof AssertionError) { // this is not working ...
+    if (item.err.stack && item.err.stack.substr(0, 'AssertionError'.length) === 'AssertionError') {
+        outputChannel.appendLine('    AssertionError:' + item.err.message);
+        if (item.err.hasOwnProperty('actual') || item.err.hasOwnProperty('expected')) {
+            outputChannel.appendLine('    + expected - actual');
+            outputChannel.appendLine('');
+            outputChannel.appendLine('    -' + item.err.actual);
+            outputChannel.appendLine('    +' + item.err.expected);
+        }
+
+        outputChannel.appendLine('');
+
+        const endl = item.err.stack.indexOf('\n') + 1;
+        outputChannel.appendLine(item.err.stack.substr(endl));
+    } else {
+        outputChannel.appendLine('    Error:' + item.err.message);
+    }
     outputChannel.appendLine('');
 }
