@@ -1,20 +1,23 @@
 const Mocha = require('mocha');
 const expect = require('chai').expect;
-const utils = require('../src/utility');
 
-
-describe('block #1', function () {
-    it('test', function () {
-
-        console.log('---- im HERE');
-        expect(utils.add(1, 2)).to.equal(3);
+describe('main block', function () {
+    it('inconclusive', function () {
+        // this test was not yet executed in current session
     });
-});
 
-describe('block #2', function () {
-    it('test', function () {
+    it('running', function (done) {
+        // this test is currently executing ...
+        this.timeout(10000);
 
-        console.log('---- im HERE');
-        expect(utils.add(1, 2)).to.equal(3);
+        setTimeout(() => done(), 5000);
+    });
+
+    it('success', function () {
+        expect(1).to.equal(1);
+    });
+
+    it('fail', function () {
+        expect(1).to.equal(0);
     });
 });

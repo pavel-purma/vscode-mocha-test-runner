@@ -33,7 +33,10 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
         const selector = getDocumentSelector(document);
         if (document.isDirty || this._items[selector] === undefined) {
             const sourceFile = ts.createSourceFile(document.fileName, document.getText(), ts.ScriptTarget.Latest, false, ts.ScriptKind.Unknown);
-            this._items[selector] = sourceFile.statements.map(statement => visitor(sourceFile, statement)).filter(o => o);
+            this._items[selector] = sourceFile.statements.map(statement => visitor(sourceFile, statement))
+                .filter(o => o)
+                // filter out *it* function calls that arent wrapped by *describe* function - mocha dont return file path for these ...
+                .filter((o: Item) => o && o.name === 'describe');
         }
 
         const testStates = this._testStates[selector] || {};
@@ -120,6 +123,20 @@ class DescribeCodeLens extends TestCodeLensBase {
         return new RegExp('^(' + this.selectors.map(o => escapeRegExp(o)).join('|') + ')$', 'i');
     }
 
+}
+
+class DescribeAllCodeLens extends TestCodeLensBase { 
+    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string) {
+        super(range, document, selector, undefined);
+    }
+
+    get title(): string {
+        return 'Run all';
+    }
+
+    get grep() {
+        return new RegExp('^' + this.selector, 'i');
+    }
 }
 
 class ItCodeLens extends TestCodeLensBase {
@@ -266,7 +283,11 @@ function createCodeLens(testStates: { [title: string]: TestState }, document: vs
     factory('Running', runningTests);
     factory('Success', successTests);
     factory('Fail', failTests);
-
+    
+    if ((inconclusiveTests.length > 0 ? 1 : 0) + (successTests.length > 0 ? 1 : 0) + (failTests.length > 0 ? 1 : 0) > 1) {
+        codeLens.push(new DescribeAllCodeLens(new vscode.Range(item.line, offset, item.line, offset + 7), document, selector));
+    }
+    
     return {
         tests: testsCounter,
         inconclusive: inconclusiveTests,

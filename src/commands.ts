@@ -65,11 +65,13 @@ function updateTestStates(fileSelector: string, selectors: string[], results?: T
             states[selectors[i]] = state;
         }
     };
-
-    doUpdate('Inconclusive', selectors);
+    
     if (results) {
+        doUpdate('Inconclusive', selectors);
         results.fail && doUpdate('Fail', results.fail[fileSelector]);
         results.success && doUpdate('Success', results.success[fileSelector]);
+    } else { 
+        doUpdate('Running', selectors);
     }
     
     codeLensProvider.updateTestStates(fileSelector, states);
