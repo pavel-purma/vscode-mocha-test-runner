@@ -1,6 +1,6 @@
 {
   "name": "vscode-mocha-test-runner",
-  "displayName": "vscode-mocha-test-runner",
+  "displayName": "Mocha test runner",
   "description": "Code lens provider and runner for mocha unit tests.",
   "version": "0.0.4",
   "publisher": "cstechnologies",

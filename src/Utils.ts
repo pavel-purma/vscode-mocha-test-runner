@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { config } from "./config";
 
-export type TestsResults = { success: { [file: string]: string[] }, fail: { [file: string]: string[] } };
+export type TestsResults = { success: { [file: string]: string[] }, fail: { [file: string]: { selector: string, err: any }[] } };
 export type TestState = 'Inconclusive' | 'Running' | 'Success' | 'Fail';
 export type TestStates = { [title: string]: TestState };
 export type FileTestStates = { [fileName: string]: TestStates };

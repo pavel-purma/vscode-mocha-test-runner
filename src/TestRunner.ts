@@ -7,7 +7,7 @@ import { TestsResults, getFileSelector } from "./Utils";
 
 export function runTests(grep?: RegExp) {
     const mocha = createMocha();
-    
+
     if (grep) {
         console.log();
         console.log('Grep pattern:');
@@ -89,7 +89,7 @@ function runMocha(mocha: Mocha) {
 
 let spec: Mocha.reporters.Spec;
 let success: { [file: string]: string[] };
-let fail: { [file: string]: string[] };
+let fail: { [file: string]: { selector: string, err: any }[] };
 const suitePath: string[] = [];
 
 function customReporter(runner: any, options: any) {
@@ -97,23 +97,22 @@ function customReporter(runner: any, options: any) {
     success = {};
     fail = {};
 
-    const callback = (target: { [file: string]: string[] }) => {
-        return (test: any) => {
-            const selector = getFileSelector(test.file);
-            let list = target[selector];
-            if (!list) {
-                list = [];
-                target[selector] = list;
-            }
-            list.push(trimArray(suitePath).concat([test.title]).join(' '));
-        };
-    }
-
     runner
         .on('suite', suite => suitePath.push(suite.title))
         .on('suite end', () => suitePath.pop())
-        .on('pass', callback(success))
-        .on('fail', callback(fail));
+        .on('pass', (test: any) => {
+            const selector = getFileSelector(test.file);
+            success[selector] = success[selector] || [];
+            success[selector].push(trimArray(suitePath).concat([test.title]).join(' '));
+        })
+        .on('fail', (test: any, err: any) => {
+            const selector = getFileSelector(test.file);
+            fail[selector] = fail[selector] || [];
+            fail[selector].push({
+                selector: trimArray(suitePath).concat([test.title]).join(' '),
+                err
+            });
+        });
 }
 
 function resolveGlob(): Promise<string[]> {

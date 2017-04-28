@@ -8,12 +8,14 @@ import { config } from "./config";
 import { commandRunTests, commandRunAllTests } from "./commands";
 
 export let codeLensProvider: TestsCodeLensProvider;
+export let outputChannel: vscode.OutputChannel;
 let compilerWatch;
 
 // this method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
     try {
         codeLensProvider = new TestsCodeLensProvider();
+        outputChannel = vscode.window.createOutputChannel('Mocha test runner');
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-test', commandRunTests));
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-all-tests', commandRunAllTests));
 
