@@ -7,6 +7,7 @@ import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, g
 import { runTests } from "./TestRunner";
 import { codeLensProvider, outputChannel } from "./extension";
 import { config } from "./config";
+
 type TestContext = { lines: string[], passing: number, failing: number };
 
 export function commandRunTests(codeLens: TestCodeLensBase) {
@@ -20,14 +21,14 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
         codeLens.document.save();
     }
 
-    console.log('run-test: ' + JSON.stringify(codeLens.selectors));
-
+    //console.log('run-test: ' + JSON.stringify(codeLens.selectors));
     const selector = getDocumentSelector(codeLens.document);
 
     const states: TestStates = {};
     for (var i = 0; i < codeLens.selectors.length; ++i) {
         states[codeLens.selectors[i]] = 'Running';
     }
+    
     codeLensProvider.updateTestStates(selector, states);
 
     runTests(codeLens.grep)
