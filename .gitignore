@@ -2,3 +2,4 @@
 /out
 npm-debug.log
 /*.vsix
+symbols.json

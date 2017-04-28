@@ -6,5 +6,5 @@
     "search.exclude": {
         "**/node_modules/": true
     },
-    "mocha.files.rootPath": ".test",
+    "mocha.files.rootPath": ".test"
 }
