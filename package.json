@@ -2,7 +2,7 @@
     "name": "vscode-mocha-test-runner",
     "displayName": "Mocha test runner",
     "description": "Code lens provider and runner for mocha unit tests.",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "publisher": "cstechnologies",
     "icon": "images/icon.png",
     "repository": {
@@ -29,20 +29,8 @@
             "type": "object",
             "title": "Mocha options",
             "properties": {
-                "mocha.options.ui": {
-                    "type": "string",
-                    "description": "Option passed to Mocha"
-                },
-                "mocha.options.timeout": {
-                    "type": "number",
-                    "description": "Option passed to Mocha"
-                },
-                "mocha.options.slow": {
-                    "type": "number",
-                    "description": "Option passed to Mocha"
-                },
-                "mocha.options.bail": {
-                    "type": "boolean",
+                "mocha.options": {
+                    "default": {},
                     "description": "Option passed to Mocha"
                 },
                 "mocha.env": {

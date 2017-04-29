@@ -56,21 +56,13 @@ function createMocha() {
         reporterOptions?: any;
         slow?: number;
         bail?: boolean;
-    } = {};
+    } = undefined;
 
-    if (config.options) {
-        options.ui = config.options.ui;
-        options.timeout = config.options.timeout;
-        options.slow = config.options.slow;
-        options.bail = config.options.bail;
-    }
-
-    const jsonOptions = JSON.stringify(options, null, 2);
-    if (jsonOptions !== '{}') {
-        console.log(`Applying Mocha options:\n${indent(jsonOptions)}`);
+    if (config.options && Object.keys(config.options).length > 0) {
+        options = { ...config.options };
+        console.log(`Applying Mocha options:\n${indent(JSON.stringify(options, null, 2))}`);
     } else {
         console.log(`No Mocha options are configured. You can set it under File > Preferences > Workspace Settings.`);
-        options = undefined;
     }
 
     const mocha = new Mocha(options);

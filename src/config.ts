@@ -1,12 +1,7 @@
 import * as vscode from 'vscode';
 
 interface Config {
-    options?: {
-        ui?: string;
-        timeout?: number;
-        slow?: number;
-        bail?: boolean;
-    };
+    options?: any;
     env?: any;
     files: {
         rootPath: string;

@@ -21,3 +21,6 @@ All notable changes to the "vscode-mocha-test-runner" extension will be document
 
 ## 0.0.5 - 2017_04_29
 - Added error handling
+
+## 0.0.6 - 2017_04_29
+- Bug fixing from 0.0.5
