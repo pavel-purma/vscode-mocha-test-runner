@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as diff from 'diff';
 import * as minimatch from 'minimatch';
 import { TestCodeLensBase } from "./TestsCodeLensProvider";
-import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, getDocumentSelector, TestResult, languages } from "./Utils";
+import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, getDocumentSelector, TestResult, languages, throwIfNot, appendError } from "./Utils";
 import { runTests } from "./TestRunner";
 import { codeLensProvider, outputChannel } from "./extension";
 import { config } from "./config";
@@ -11,6 +11,8 @@ import { config } from "./config";
 type TestContext = { lines: string[], passing: number, failing: number };
 
 export function commandRunTests(codeLens: TestCodeLensBase) {
+    throwIfNot('commandRunTests', codeLens, 'codeLens');
+
     if (codeLens.state === 'Running') {
         return;
     }
@@ -28,7 +30,7 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
     for (var i = 0; i < codeLens.selectors.length; ++i) {
         states[codeLens.selectors[i]] = 'Running';
     }
-    
+
     codeLensProvider.updateTestStates(selector, states);
 
     runTests(codeLens.grep)
@@ -39,7 +41,7 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
                 passing: 0
             };
 
-            updateTestStates(context, states, selector, results[selector], codeLens.selectors);
+            updateTestStates(context, states, selector, results[selector] || {}, codeLens.selectors);
             codeLensProvider.updateTestStates(selector, states);
 
             outputChannel.appendLine(context.passing + ' passing');
@@ -49,7 +51,8 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
             for (let line of context.lines) {
                 outputChannel.appendLine(line);
             }
-        });
+        })
+        .catch(appendError);
 }
 
 export function commandRunAllTests() {
@@ -85,19 +88,20 @@ export function commandRunAllTests() {
             for (let line of context.lines) {
                 outputChannel.appendLine(line);
             }
-        });
+        })
+        .catch(appendError);
 }
 
-export function commandRunFileTests() { 
+export function commandRunFileTests() {
     outputChannel.clear();
-    
-    if (!vscode.window.activeTextEditor) { 
+
+    if (!vscode.window.activeTextEditor) {
         outputChannel.appendLine('run-file-tests: No active editor');
         return;
     }
 
-    const document = vscode.window.activeTextEditor.document;    
-    if (!document || languages.findIndex(o => o.language === document.languageId && minimatch(document.fileName, o.pattern, { dot: true })) === -1) { 
+    const document = vscode.window.activeTextEditor.document;
+    if (!document || languages.findIndex(o => o.language === document.languageId && minimatch(document.fileName, o.pattern, { dot: true })) === -1) {
         outputChannel.appendLine('run-file-tests: Active document is not valid test file.');
         return;
     }
@@ -127,10 +131,16 @@ export function commandRunFileTests() {
             for (let line of context.lines) {
                 outputChannel.appendLine(line);
             }
-        });
+        })
+        .catch(appendError);
 }
 
 function updateTestStates(context: TestContext, states: TestStates, fileSelector: string, results: TestResult[], selectors?: string[]) {
+    throwIfNot('updateTestStates', context, 'context');
+    throwIfNot('updateTestStates', states, 'states');
+    throwIfNot('updateTestStates', fileSelector, 'fileSelector');
+    throwIfNot('updateTestStates', results, 'results');
+
     outputChannel.appendLine(fileSelector + ':');
 
     if (selectors) {
@@ -164,15 +174,19 @@ function updateTestStates(context: TestContext, states: TestStates, fileSelector
 }
 
 function pushFailInfo(lines: string[], index: number, item: TestResult) {
+    throwIfNot('pushFailInfo', lines, 'lines');
+    throwIfNot('pushFailInfo', index, 'index');
+    throwIfNot('pushFailInfo', item, 'item');
+
     lines.push('  ' + index + ') ' + item.selector.join(' ') + ':');
     lines.push('');
 
-    // if (item.err instanceof AssertionError) { // this is not working ...
     if (item.err.stack && item.err.stack.substr(0, 'AssertionError'.length) === 'AssertionError') {
         lines.push('    AssertionError: ' + item.err.message);
         if (item.err.hasOwnProperty('actual') || item.err.hasOwnProperty('expected')) {
-            lines.push(unifiedDiff(item.err, true));
+            lines.push(unifiedDiff(item.err));
         }
+
         const endl = item.err.stack.indexOf('\n') + 1;
         lines.push(item.err.stack.substr(endl));
     } else {
@@ -182,65 +196,14 @@ function pushFailInfo(lines: string[], index: number, item: TestResult) {
     lines.push('');
 }
 
-function unifiedDiff(err, escape) {
-    var indent = '      ';
-    function cleanUp(line) {
-        if (escape) {
-            line = line.replace(/\t/g, '<tab>').replace(/\r/g, '<CR>').replace(/\n/g, '<LF>\n');
-        }
-        if (line[0] === '+') {
-            return indent + colorLines('diff added', line);
-        }
-        if (line[0] === '-') {
-            return indent + colorLines('diff removed', line);
-        }
-        if (line.match(/@@/)) {
-            return null;
-        }
-        if (line.match(/\\ No newline/)) {
-            return null;
-        }
-        return indent + line;
-    }
-    function notBlank(line) {
-        return typeof line !== 'undefined' && line !== null;
-    }
-    var msg = diff.createPatch('string', err.actual, err.expected, undefined, undefined);
-    var lines = msg.split('\n').splice(4);
-    return '\n      ' +
-        colorLines('diff added', '+ expected') + ' ' +
-        colorLines('diff removed', '- actual') +
-        '\n\n' +
-        lines.map(cleanUp).filter(notBlank).join('\n');
-}
+function unifiedDiff(err: { actual: any, expected: any }) {
+    throwIfNot('unifiedDiff', err, 'err');
 
-function colorLines(name, str) {
-    return str.split('\n').map(function (str) {
-        return color(name, str);
-    }).join('\n');
-}
-
-function color(type, str) {
-    var colors = {
-        pass: 90,
-        fail: 31,
-        'bright pass': 92,
-        'bright fail': 91,
-        'bright yellow': 93,
-        pending: 36,
-        suite: 0,
-        'error title': 0,
-        'error message': 31,
-        'error stack': 90,
-        checkmark: 32,
-        fast: 90,
-        medium: 33,
-        slow: 31,
-        green: 32,
-        light: 90,
-        'diff gutter': 90,
-        'diff added': 32,
-        'diff removed': 31
-    };
-    return '\u001b[' + colors[type] + 'm' + str + '\u001b[0m';
+    const msg = diff.createPatch('string', err.actual, err.expected, undefined, undefined);
+    const lines = msg.split('\n').splice(4);
+    return '\n      + expected - actual\n\n' +
+        lines
+            .map(line => line.match(/@@/) || line.match(/\\ No newline/) ? null : '      ' + line)
+            .filter(line => typeof line !== 'undefined' && line !== null)
+            .join('\n');
 }

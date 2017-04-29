@@ -17,3 +17,7 @@ All notable changes to the "vscode-mocha-test-runner" extension will be document
 - Writen Readme.md
 - Added output channel for showing mocha output - 'Mocha test runner'
 - Added shortcuts for 'run-all' and 'run-file' commands
+- First published version
+
+## 0.0.5 - 2017_04_29
+- Added error handling

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as ts from "typescript";
 import * as path from 'path';
-import { FileTestStates, TestStates, TestState, getDocumentSelector } from "./Utils";
+import { FileTestStates, TestStates, TestState, getDocumentSelector, throwIfNot } from "./Utils";
 const escapeRegExp = require('escape-regexp');
 
 export class TestsCodeLensProvider implements vscode.CodeLensProvider {
@@ -15,12 +15,17 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
     private _eventEmitter: vscode.EventEmitter<void>;
 
     updateTestStates(fileSelector: string, newValues: TestStates) {
+        throwIfNot('updateTestStates', fileSelector, 'fileSelector');
+        throwIfNot('updateTestStates', newValues, 'newValues');
+
         const testStates = this._testStates[fileSelector];
         this._testStates[fileSelector] = testStates ? { ...testStates, ...newValues } : newValues;
         this._eventEmitter.fire(null);
     }
 
     updateFileTestStates(fileTestStates: FileTestStates) {
+        throwIfNot('updateFileTestStates', fileTestStates, 'fileTestStates');
+
         this._testStates = this._testStates ? { ...this._testStates, ...fileTestStates } : fileTestStates;
         this._eventEmitter.fire(null);
     }
@@ -65,8 +70,11 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
 }
 
 export abstract class TestCodeLensBase extends vscode.CodeLens {
-    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState) {
+    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state?: TestState) {
         super(range);
+        throwIfNot('TestCodeLensBase', document, 'document');
+        throwIfNot('TestCodeLensBase', selector, 'selector');
+
         this._document = document;
         this._selector = selector;
         this._state = state;
@@ -95,7 +103,6 @@ export abstract class TestCodeLensBase extends vscode.CodeLens {
     }
 
     abstract get grep(): RegExp;
-
 }
 
 type DescribeItem = { name: 'describe'; line: number; title: string; parent: DescribeItem; children: Item[]; }
@@ -106,6 +113,8 @@ type createCodeLensResult = { tests: number, inconclusive: string[], running: st
 class DescribeCodeLens extends TestCodeLensBase {
     constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState, selectors: string[]) {
         super(range, document, selector, state);
+        throwIfNot('DescribeCodeLens', selectors, 'selectors');
+
         this._selectors = selectors;
     }
 
@@ -122,10 +131,9 @@ class DescribeCodeLens extends TestCodeLensBase {
     get grep() {
         return new RegExp('^(' + this.selectors.map(o => escapeRegExp(o)).join('|') + ')$', 'i');
     }
-
 }
 
-class DescribeAllCodeLens extends TestCodeLensBase { 
+class DescribeAllCodeLens extends TestCodeLensBase {
     constructor(range: vscode.Range, document: vscode.TextDocument, selector: string) {
         super(range, document, selector, undefined);
     }
@@ -154,6 +162,9 @@ class ItCodeLens extends TestCodeLensBase {
 }
 
 function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
+    throwIfNot('visitor', sourceFile, 'sourceFile');
+    throwIfNot('visitor', node, 'node');
+
     switch (node.kind) {
         case ts.SyntaxKind.ExpressionStatement: {
             const obj = node as ts.ExpressionStatement;
@@ -238,6 +249,11 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
 }
 
 function createCodeLens(testStates: { [title: string]: TestState }, document: vscode.TextDocument, codeLens: vscode.CodeLens[], item: Item, parentSelector?: string): createCodeLensResult {
+    throwIfNot('createCodeLens', testStates, 'testStates');
+    throwIfNot('createCodeLens', document, 'document');
+    throwIfNot('createCodeLens', codeLens, 'codeLens');
+    throwIfNot('createCodeLens', item, 'item');
+
     let selector = item.title;
 
     if (parentSelector) {
@@ -283,11 +299,11 @@ function createCodeLens(testStates: { [title: string]: TestState }, document: vs
     factory('Running', runningTests);
     factory('Success', successTests);
     factory('Fail', failTests);
-    
+
     if ((inconclusiveTests.length > 0 ? 1 : 0) + (successTests.length > 0 ? 1 : 0) + (failTests.length > 0 ? 1 : 0) > 1) {
         codeLens.push(new DescribeAllCodeLens(new vscode.Range(item.line, offset, item.line, offset + 7), document, selector));
     }
-    
+
     return {
         tests: testsCounter,
         inconclusive: inconclusiveTests,

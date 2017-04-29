@@ -15,15 +15,18 @@ let compilerWatch;
 export function activate(context: vscode.ExtensionContext) {
     try {
         codeLensProvider = new TestsCodeLensProvider();
-        outputChannel = vscode.window.createOutputChannel('Mocha test runner');        
+        outputChannel = vscode.window.createOutputChannel('Mocha test runner');
         outputChannel.show();
+
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-test', commandRunTests));
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-all-tests', commandRunAllTests));
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-file-tests', commandRunFileTests));
+
         context.subscriptions.push(vscode.languages.registerCodeLensProvider(languages, codeLensProvider));
+
         console.log('vscode-mocha-test-runner started');
     } catch (err) {
-        console.error(err);
+        console.error('vscode-mocha-test-runner activate error: ' + err);
     }
 }
 
