@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as diff from 'diff';
 import * as minimatch from 'minimatch';
-import { TestCodeLensBase } from "./TestsCodeLensProvider";
-import { getFileSelector, FileTestStates, TestState, TestStates, TestsResults, getDocumentSelector, TestResult, languages, throwIfNot, appendError } from "./Utils";
+import { TestCodeLensBase, ItCodeLens } from "./TestsCodeLensProvider";
+import { getFileSelector, getDocumentSelector, languages, throwIfNot, appendError } from "./Utils";
 import { runTests } from "./TestRunner";
 import { codeLensProvider, outputChannel } from "./extension";
 import { config } from "./config";
+import { TestResult, TestStates, FileTestStates } from "./Types";
 
 type TestContext = { lines: string[], passing: number, failing: number };
 
@@ -23,7 +24,6 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
         codeLens.document.save();
     }
 
-    //console.log('run-test: ' + JSON.stringify(codeLens.selectors));
     const selector = getDocumentSelector(codeLens.document);
 
     const states: TestStates = {};
@@ -33,7 +33,8 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
 
     codeLensProvider.updateTestStates(selector, states);
 
-    runTests(codeLens.grep)
+    const debug = codeLens instanceof ItCodeLens && codeLens.debug;
+    runTests(debug, codeLens.grep)
         .then(results => {
             const context = {
                 lines: [],
@@ -41,7 +42,7 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
                 passing: 0
             };
 
-            updateTestStates(context, states, selector, results[selector] || {}, codeLens.selectors);
+            updateTestStates(context, states, selector, results[selector] || [], codeLens.selectors);
             codeLensProvider.updateTestStates(selector, states);
 
             outputChannel.appendLine(context.passing + ' passing');
@@ -58,7 +59,7 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
 export function commandRunAllTests() {
     outputChannel.clear();
 
-    runTests()
+    runTests(false, vscode.workspace.rootPath)
         .then(results => {
             const fileStates: FileTestStates = {};
 
@@ -113,7 +114,7 @@ export function commandRunFileTests() {
     const selector = getDocumentSelector(document);
 
     const states: TestStates = {};
-    runTests(undefined, [selector])
+    runTests(false, undefined, [selector])
         .then(results => {
             const context = {
                 lines: [],

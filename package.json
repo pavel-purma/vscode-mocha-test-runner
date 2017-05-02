@@ -37,6 +37,16 @@
                     "default": {},
                     "description": "Environment variables to run your tests"
                 },
+                "mocha.glob": {
+                    "default": "**/*.test.js",
+                    "description": "Glob pattern for test files.",
+                    "type": "string"
+                },
+                "mocha.debugPort": {
+                    "default": 6696,
+                    "description": "Mocha debug port.",
+                    "type": "number"
+                },
                 "mocha.files.rootPath": {
                     "default": "",
                     "description": "Directory with test files relatice to root path",

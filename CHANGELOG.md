@@ -24,3 +24,6 @@ All notable changes to the "vscode-mocha-test-runner" extension will be document
 
 ## 0.0.6 - 2017_04_29
 - Bug fixing from 0.0.5
+
+## 0.0.7 - 2017_05_02
+- Added ability to run single test in debug mode

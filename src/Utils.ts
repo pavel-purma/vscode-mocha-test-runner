@@ -3,12 +3,6 @@ import * as path from 'path';
 import { config } from "./config";
 import { outputChannel } from "./extension";
 
-export type TestsResults = { [file: string]: TestResult[] };
-export type TestResult = { selector: string[], err?: any };
-export type TestState = 'Inconclusive' | 'Running' | 'Success' | 'Fail';
-export type TestStates = { [title: string]: TestState };
-export type FileTestStates = { [fileName: string]: TestStates };
-
 export function getFileSelector(fileName: string) {
     throwIfNot('getFileSelector', fileName, 'fileName');
 

@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as ts from "typescript";
 import * as path from 'path';
-import { FileTestStates, TestStates, TestState, getDocumentSelector, throwIfNot } from "./Utils";
+import { getDocumentSelector, throwIfNot } from "./Utils";
+import { FileTestStates, TestStates, TestState } from "./Types";
 const escapeRegExp = require('escape-regexp');
 
 export class TestsCodeLensProvider implements vscode.CodeLensProvider {
@@ -102,7 +103,7 @@ export abstract class TestCodeLensBase extends vscode.CodeLens {
         return this._state;
     }
 
-    abstract get grep(): RegExp;
+    abstract get grep(): string;
 }
 
 type DescribeItem = { name: 'describe'; line: number; title: string; parent: DescribeItem; children: Item[]; }
@@ -129,7 +130,7 @@ class DescribeCodeLens extends TestCodeLensBase {
     }
 
     get grep() {
-        return new RegExp('^(' + this.selectors.map(o => escapeRegExp(o)).join('|') + ')$', 'i');
+        return '^(' + this.selectors.map(o => escapeRegExp(o)).join('|') + ')$';
     }
 }
 
@@ -143,21 +144,27 @@ class DescribeAllCodeLens extends TestCodeLensBase {
     }
 
     get grep() {
-        return new RegExp('^' + this.selector, 'i');
+        return '^' + this.selector;
     }
 }
 
-class ItCodeLens extends TestCodeLensBase {
-    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState) {
+export class ItCodeLens extends TestCodeLensBase {
+    constructor(range: vscode.Range, document: vscode.TextDocument, selector: string, state: TestState, debug: boolean) {
         super(range, document, selector, state);
+        this._debug = debug;
     }
 
+    private _debug: boolean;
+
+    get debug(): boolean { 
+        return this._debug;
+    }
     get title(): string {
-        return this.state;
+        return this._debug ? 'Debug' : this.state;
     }
 
     get grep() {
-        return new RegExp('^' + escapeRegExp(this.selector) + '$', 'i');
+        return '^' + escapeRegExp(this.selector) + '$';
     }
 }
 
@@ -262,7 +269,8 @@ function createCodeLens(testStates: { [title: string]: TestState }, document: vs
 
     if (item.name === 'it') {
         const testState = testStates[selector] || 'Inconclusive';
-        codeLens.push(new ItCodeLens(new vscode.Range(item.line, 0, item.line, testState.length), document, selector, testState));
+        codeLens.push(new ItCodeLens(new vscode.Range(item.line, 0, item.line, testState.length), document, selector, testState, false));
+        codeLens.push(new ItCodeLens(new vscode.Range(item.line, testState.length, item.line, testState.length + 5), document, selector, testState, true));
         return {
             tests: 1,
             inconclusive: testState === 'Inconclusive' ? [selector] : [],

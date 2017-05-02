@@ -3,11 +3,16 @@ const expect = require('chai').expect;
 const utils = require('../src/utility');
 
 describe('Utility', function () {
-    it('Success', function () {
-        expect(utils.add(1, 2)).to.equal(3);
+    it('Success', function (done) {
+        this.timeout(11000);
+        setTimeout(function () { 
+            expect(utils.add(1, 2)).to.equal(3);
+            done();            
+        }, 1000);        
     });
     
     it('Fail', function () {
+        console.log('tu');
         expect(utils.add(1, 2)).to.equal(0);
     });
  

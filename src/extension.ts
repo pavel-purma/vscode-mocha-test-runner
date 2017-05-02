@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
 import { TestsCodeLensProvider, TestCodeLensBase } from "./TestsCodeLensProvider";
-import { FileTestStates, TestState, TestsResults, TestStates, languages } from "./Utils";
-import { runTests, runTestsInFile } from "./TestRunner";
-import { config } from "./config";
+import { languages } from "./Utils";
 import { commandRunTests, commandRunAllTests, commandRunFileTests } from "./commands";
 
 export let codeLensProvider: TestsCodeLensProvider;
