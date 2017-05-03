@@ -156,7 +156,7 @@ function updateTestStates(context: TestContext, states: TestStates, fileSelector
         const actual = test.selector.slice(0, -1).join(' ');
         if (actual !== prev) {
             prev = actual;
-            const title = test.selector.length > 2 ? test.selector[test.selector.length - 2] : test.selector[test.selector.length - 1];
+            const title = test.selector[test.selector.length - 2];
             outputChannel.appendLine(Array(test.selector.length).join('  ') + title);
         }
 
