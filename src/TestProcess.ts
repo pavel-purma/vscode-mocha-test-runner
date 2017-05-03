@@ -17,7 +17,7 @@ process.on('message', processArgs => {
             process.exit(0);
         })
         .catch(err => {
-            process.send(err.toString());
+            process.send(err);
             process.exit(-1);
         });
 });
@@ -131,7 +131,12 @@ function customReporter(runner: any, options: any) {
             results[selector] = results[selector] || [];
             results[selector].push({
                 selector: trimArray(suitePath).concat([test.title]),
-                err: err.toString()
+                err: {
+                    actual: err.actual,
+                    expected: err.expected,
+                    message: err.message,
+                    stack: err.stack
+                }
             });
         });
 }
