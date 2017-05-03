@@ -170,7 +170,7 @@ function updateTestStates(context: TestContext, states: TestStates, fileSelector
             outputChannel.appendLine(Array(test.selector.length).join('  ') + title);
         }
 
-        if (!test.err) {
+        if (typeof test.err === 'undefined') {
             states[test.selector.join(' ')] = 'Success';
             outputChannel.appendLine(Array(test.selector.length + 1).join('  ') + '√  ' + test.selector[test.selector.length - 1]);
             ++context.passing;
