@@ -10,13 +10,14 @@ let results: TestsResults;
 const suitePath: string[] = [];
 
 process.on('message', processArgs => {
+    processArgs.options = { ...processArgs.options, timeout: 360000 };
     runTestProcess(processArgs)
         .then(results => {
             process.send(results);
             process.exit(0);
         })
         .catch(err => {
-            process.send(err);
+            process.send(err.toString());
             process.exit(-1);
         });
 });
@@ -75,6 +76,7 @@ function createMocha() {
     }
 
     const mocha = new Mocha(options);
+    
     if (args.setup) {
         for (let setupFile of args.setup) {
             const file = path.join(args.workspacePath, setupFile);
@@ -129,7 +131,7 @@ function customReporter(runner: any, options: any) {
             results[selector] = results[selector] || [];
             results[selector].push({
                 selector: trimArray(suitePath).concat([test.title]),
-                err
+                err: err.toString()
             });
         });
 }

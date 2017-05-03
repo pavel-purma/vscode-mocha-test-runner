@@ -38,8 +38,6 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
     const testProcess = path.join(path.dirname(module.filename), 'TestProcess.js');
 
     const forkArgs = [
-        '--no-timeouts',
-        '--nolazy',
         '--debug=' + config.debugPort
     ];
 
