@@ -53,7 +53,17 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
                 outputChannel.appendLine(line);
             }
         })
-        .catch(appendError);
+        .catch(err => { 
+            const context = {
+                lines: [],
+                failing: 0,
+                passing: 0
+            };
+
+            updateTestStates(context, states, selector, [], codeLens.selectors);
+            codeLensProvider.updateTestStates(selector, states);
+            appendError(err);
+        });
 }
 
 export function commandRunAllTests() {

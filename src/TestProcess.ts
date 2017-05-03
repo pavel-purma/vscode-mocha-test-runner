@@ -88,8 +88,8 @@ function createMocha() {
 }
 
 function runMocha(mocha: Mocha) {
-    return new Promise<TestsResults>(resolve => {
-        mocha.run(failures => {
+    return new Promise<TestsResults>((resolve, reject) => {
+        const callback = (failures: number) => {            
             const keys = Object.keys(results);
             for (let key of keys) {
                 results[key].sort((a, b) => {
@@ -100,7 +100,13 @@ function runMocha(mocha: Mocha) {
             }
 
             resolve(results);
-        });
+        };
+
+        try {
+            mocha.run(callback);
+        } catch (err) {
+            reject(err.message);
+        }
     });
 }
 

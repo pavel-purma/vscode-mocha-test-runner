@@ -27,3 +27,6 @@ All notable changes to the "vscode-mocha-test-runner" extension will be document
 
 ## 0.0.7 - 2017_05_02
 - Added ability to run single test in debug mode
+
+## 0.0.14 - 2017_05_03
+- Fixed bug: Unhandled exception when starting mocha in typescript code, that cannot be successfully compiled.
