@@ -244,9 +244,9 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
 
         case ts.SyntaxKind.ImportDeclaration:
         case ts.SyntaxKind.VariableStatement:
-        case ts.SyntaxKind.PropertyAccessExpression: {
+        case ts.SyntaxKind.PropertyAccessExpression:
+        case ts.SyntaxKind.FunctionDeclaration: 
             return null;
-        }
 
         default: {
             console.log('Unresolved node: \'' + ts.SyntaxKind[node.kind] + '\'');
