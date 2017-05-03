@@ -39,12 +39,13 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
 
     const forkArgs = [
         '--no-timeouts',
+        '--nolazy',
         '--debug=' + config.debugPort
     ];
 
     // create form process ...
     const process = fork(testProcess, forkArgs, { cwd: vscode.workspace.rootPath });
-    
+
     // ... and start attaching to it
     vscode.commands.executeCommand('vscode.startDebug', {
         "name": "Attach",
@@ -52,9 +53,17 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
         "request": "attach",
         "port": config.debugPort,
         "address": "localhost",
-        "restart": false,
         "sourceMaps": true,
-        "localRoot": args.workspacePath
+        "trace": true,
+        "runtimeArgs": [
+            "--nolazy"
+        ],
+        "env": {
+            "NODE_ENV": "test",
+        },
+        "outFiles": [
+            path.join(args.workspacePath, args.rootPath, args.glob)
+        ],
     });
 
     return new Promise((resolve, reject) => {
