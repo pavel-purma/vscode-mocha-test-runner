@@ -30,39 +30,35 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
         ...processArgs
     };
 
-    if (!debug) {
-        // no need to fork new process when not debugging ...
-        return runTestProcess(args);
-    }
-
     const testProcess = path.join(path.dirname(module.filename), 'TestProcess.js');
 
-    const forkArgs = [
-        '--debug=' + config.debugPort
-    ];
+    const forkArgs = [];
+    if (debug) {
+        forkArgs.push('--debug=' + config.debugPort);
+    }
 
-    // create form process ...
     const process = fork(testProcess, forkArgs, { cwd: vscode.workspace.rootPath });
 
-    // ... and start attaching to it
-    vscode.commands.executeCommand('vscode.startDebug', {
-        "name": "Attach",
-        "type": "node",
-        "request": "attach",
-        "port": config.debugPort,
-        "address": "localhost",
-        "sourceMaps": true,
-        "trace": true,
-        "runtimeArgs": [
-            "--nolazy"
-        ],
-        "env": {
-            "NODE_ENV": "test",
-        },
-        "outFiles": [
-            path.join(args.workspacePath, args.rootPath, args.glob)
-        ],
-    });
+    if (debug) {
+        vscode.commands.executeCommand('vscode.startDebug', {
+            "name": "Attach",
+            "type": "node",
+            "request": "attach",
+            "port": config.debugPort,
+            "address": "localhost",
+            "sourceMaps": true,
+            "trace": true,
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "env": {
+                "NODE_ENV": "test",
+            },
+            "outFiles": [
+                path.join(args.workspacePath, args.rootPath, args.glob)
+            ],
+        });
+    }
 
     return new Promise((resolve, reject) => {
         let result: any;
@@ -78,9 +74,13 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
             }
         });
 
-        // wait a while for debugger to properly attach itself to process before running tests ...        
-        setTimeout(() => {
+        if (debug) {
+            // wait a while for debugger to properly attach itself to process before running tests ...        
+            setTimeout(() => {
+                process.send(args);
+            }, 1000);
+        } else {
             process.send(args);
-        }, 1000);
+        }
     });
 }
