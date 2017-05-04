@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as diff from 'diff';
 import * as minimatch from 'minimatch';
 import { TestCodeLensBase, ItCodeLens } from "./TestsCodeLensProvider";
@@ -7,7 +8,7 @@ import { getFileSelector, getDocumentSelector, languages, throwIfNot, appendErro
 import { runTests } from "./TestRunner";
 import { codeLensProvider, outputChannel } from "./extension";
 import { config } from "./config";
-import { TestResult, TestStates, FileTestStates } from "./Types";
+import { TestResult, TestStates, FileTestStates, TestState } from "./Types";
 
 type TestContext = { lines: string[], passing: number, failing: number };
 
@@ -27,59 +28,33 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
     const selector = getDocumentSelector(codeLens.document);
 
     const states: TestStates = {};
-    for (var i = 0; i < codeLens.selectors.length; ++i) {
-        states[codeLens.selectors[i]] = 'Running';
-    }
-
-    codeLensProvider.updateTestStates(selector, states);
-
-    const debug = codeLens instanceof ItCodeLens && codeLens.debug;
-    runTests(debug, codeLens.grep)
-        .then(results => {
-            const context = {
-                lines: [],
-                failing: 0,
-                passing: 0
-            };
-
-            updateTestStates(context, states, selector, results[selector] || [], codeLens.selectors);
-            codeLensProvider.updateTestStates(selector, states);
-
-            outputChannel.appendLine(context.passing + ' passing');
-            outputChannel.appendLine(context.failing + ' failing');
-            outputChannel.appendLine('');
-
-            for (let line of context.lines) {
-                outputChannel.appendLine(line);
+    testFileExists(selector)
+        .then(() => {
+            for (var i = 0; i < codeLens.selectors.length; ++i) {
+                states[codeLens.selectors[i]] = 'Running';
             }
-        })
-        .catch(err => { 
-            const context = {
-                lines: [],
-                failing: 0,
-                passing: 0
-            };
-
-            updateTestStates(context, states, selector, [], codeLens.selectors);
             codeLensProvider.updateTestStates(selector, states);
+        })
+        .then(() => runTests(codeLens instanceof ItCodeLens && codeLens.debug, codeLens.grep))
+        .then(response => {
+            updateTestStates(states, selector, response.results[selector] || [], codeLens.selectors);
+            outputChannel.append(response.stdout);
+        })
+        .catch(err => {
+            updateTestStates(states, selector, [], codeLens.selectors, 'Fail');
             appendError(err);
-        });
+        })
+        .then(() => codeLensProvider.updateTestStates(selector, states));
 }
 
 export function commandRunAllTests() {
     outputChannel.clear();
 
-    runTests(false, vscode.workspace.rootPath)
-        .then(results => {
+    runTests(false)
+        .then(response => {
             const fileStates: FileTestStates = {};
 
-            const context = {
-                lines: [],
-                failing: 0,
-                passing: 0
-            };
-
-            const keys = Object.keys(results);
+            const keys = Object.keys(response.results);
             for (let selector of keys) {
                 let states = fileStates[selector];
                 if (!states) {
@@ -87,20 +62,14 @@ export function commandRunAllTests() {
                     fileStates[selector] = states;
                 }
 
-                updateTestStates(context, states, selector, results[selector]);
+                updateTestStates(states, selector, response.results[selector]);
             }
 
             codeLensProvider.updateFileTestStates(fileStates);
-
-            outputChannel.appendLine(context.passing + ' passing');
-            outputChannel.appendLine(context.failing + ' failing');
-            outputChannel.appendLine('');
-
-            for (let line of context.lines) {
-                outputChannel.appendLine(line);
-            }
+            outputChannel.append(response.stdout);
         })
-        .catch(appendError);
+        .catch(appendError)
+        .then(() => codeLensProvider.updateAllRunningStatesTo('Fail'));
 }
 
 export function commandRunFileTests() {
@@ -122,99 +91,47 @@ export function commandRunFileTests() {
     }
 
     const selector = getDocumentSelector(document);
-
-    const states: TestStates = {};
-    runTests(false, undefined, [selector])
-        .then(results => {
-            const context = {
-                lines: [],
-                failing: 0,
-                passing: 0
-            };
-
-            updateTestStates(context, states, selector, results[selector]);
-            codeLensProvider.updateTestStates(selector, states);
-
-            outputChannel.appendLine(context.passing + ' passing');
-            outputChannel.appendLine(context.failing + ' failing');
-            outputChannel.appendLine('');
-
-            for (let line of context.lines) {
-                outputChannel.appendLine(line);
-            }
+    let states: TestStates;
+    testFileExists(selector)
+        .then(() => {
+            states = codeLensProvider.updateFileStates(selector, 'Running');
         })
-        .catch(appendError);
+        .then(() => runTests(false, undefined, [selector]))
+        .then(response => {
+            updateTestStates(states, selector, response.results[selector], Object.keys(states));
+            codeLensProvider.updateTestStates(selector, states);
+            outputChannel.append(response.stdout);
+        })
+        .catch(appendError)
+        .then(() => codeLensProvider.updateAllRunningStatesTo('Fail'));
 }
 
-function updateTestStates(context: TestContext, states: TestStates, fileSelector: string, results: TestResult[], selectors?: string[]) {
-    throwIfNot('updateTestStates', context, 'context');
+function updateTestStates(states: TestStates, fileSelector: string, results: TestResult[], selectors?: string[], selectorsState: TestState = 'Inconclusive') {
     throwIfNot('updateTestStates', states, 'states');
     throwIfNot('updateTestStates', fileSelector, 'fileSelector');
     throwIfNot('updateTestStates', results, 'results');
 
-    outputChannel.appendLine(fileSelector + ':');
-
     if (selectors) {
         for (var i = 0; i < selectors.length; ++i) {
-            states[selectors[i]] = 'Inconclusive';
+            states[selectors[i]] = selectorsState;
         }
     }
 
-    let prev = '';
     for (let i = 0; i < results.length; ++i) {
         const test = results[i];
-        const actual = test.selector.slice(0, -1).join(' ');
-        if (actual !== prev) {
-            prev = actual;
-            const title = test.selector[test.selector.length - 2];
-            outputChannel.appendLine(Array(test.selector.length).join('  ') + title);
-        }
-
-        if (typeof test.err === 'undefined') {
-            states[test.selector.join(' ')] = 'Success';
-            outputChannel.appendLine(Array(test.selector.length + 1).join('  ') + '√  ' + test.selector[test.selector.length - 1]);
-            ++context.passing;
-        } else {
-            states[test.selector.join(' ')] = 'Fail';
-            outputChannel.appendLine(Array(test.selector.length + 1).join('  ') + (++context.failing) + ') ' + test.selector[test.selector.length - 1]);
-            pushFailInfo(context.lines, context.failing, test);
-        }
+        states[test.selector.join(' ')] = test.state;
     }
-
-    outputChannel.appendLine('');
 }
 
-function pushFailInfo(lines: string[], index: number, item: TestResult) {
-    throwIfNot('pushFailInfo', lines, 'lines');
-    throwIfNot('pushFailInfo', index, 'index');
-    throwIfNot('pushFailInfo', item, 'item');
-
-    lines.push('  ' + index + ') ' + item.selector.join(' ') + ':');
-    lines.push('');
-
-    if (item.err.stack && item.err.stack.substr(0, 'AssertionError'.length) === 'AssertionError') {
-        lines.push('    AssertionError: ' + item.err.message);
-        if (item.err.hasOwnProperty('actual') || item.err.hasOwnProperty('expected')) {
-            lines.push(unifiedDiff(item.err));
-        }
-
-        const endl = item.err.stack.indexOf('\n') + 1;
-        lines.push(item.err.stack.substr(endl));
-    } else {
-        lines.push('    Error:' + item.err.message);
-    }
-
-    lines.push('');
-}
-
-function unifiedDiff(err: { actual: any, expected: any }) {
-    throwIfNot('unifiedDiff', err, 'err');
-
-    const msg = diff.createPatch('string', err.actual, err.expected, undefined, undefined);
-    const lines = msg.split('\n').splice(4);
-    return '\n      + expected - actual\n\n' +
-        lines
-            .map(line => line.match(/@@/) || line.match(/\\ No newline/) ? null : '      ' + line)
-            .filter(line => typeof line !== 'undefined' && line !== null)
-            .join('\n');
+function testFileExists(fileSelector: string) {
+    return new Promise((resolve, reject) => {
+        const testFile = path.join(vscode.workspace.rootPath, fileSelector + '.js');
+        fs.exists(testFile, exists => {
+            if (exists) {
+                resolve();
+            } else { 
+                reject('Test file \'' + testFile + '\' was not found (Didnt u forget to transpile sources?)');
+            }
+        });
+    });
 }

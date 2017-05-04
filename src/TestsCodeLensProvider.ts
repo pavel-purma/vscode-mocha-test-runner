@@ -31,6 +31,45 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
         this._eventEmitter.fire(null);
     }
 
+    updateAllRunningStatesTo(state: 'Inconclusive' | 'Success' | 'Fail') {
+        if (!this._testStates) {
+            return;
+        }
+
+        let needUpdate = false;
+        for (let selector of Object.keys(this._testStates)) {
+            const states = this._testStates[selector];
+            for (let test of Object.keys(states)) {
+                if (states[test] === 'Running') {
+                    states[test] = state;
+                    needUpdate = true;
+                }
+            }
+        }
+
+        if (needUpdate) {
+            this._eventEmitter.fire(null);
+        }
+    }
+
+    updateFileStates(selector: string, state: TestState) {
+        if (!this._testStates) {
+            return {};
+        }
+
+        const states = this._testStates[selector];
+        if (!states) {
+            return {};
+        }
+
+        for (let test of Object.keys(states)) {
+            states[test] = state;
+        }
+
+        this._eventEmitter.fire(null);
+        return states;
+    }
+
     get onDidChangeCodeLenses() {
         return this._eventEmitter.event;
     }
@@ -156,7 +195,7 @@ export class ItCodeLens extends TestCodeLensBase {
 
     private _debug: boolean;
 
-    get debug(): boolean { 
+    get debug(): boolean {
         return this._debug;
     }
     get title(): string {
@@ -245,7 +284,7 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
         case ts.SyntaxKind.ImportDeclaration:
         case ts.SyntaxKind.VariableStatement:
         case ts.SyntaxKind.PropertyAccessExpression:
-        case ts.SyntaxKind.FunctionDeclaration: 
+        case ts.SyntaxKind.FunctionDeclaration:
             return null;
 
         default: {

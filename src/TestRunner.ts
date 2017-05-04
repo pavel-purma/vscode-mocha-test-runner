@@ -6,7 +6,7 @@ import { Glob } from 'glob';
 import { fork, ForkOptions } from 'child_process';
 import { config } from "./config";
 import { throwIfNot } from "./Utils";
-import { TestProcessArgs, TestsResults } from "./Types";
+import { TestProcessRequest, TestsResults, TestProcessResponse } from "./Types";
 import { runTestProcess } from "./TestProcess";
 
 export function runTests(debug = false, grep?: string, fileSelectors?: string[]) {
@@ -19,7 +19,7 @@ export function runTestsInFile(fileName: string) {
     return runTestsCore({ fileName }, false);
 }
 
-function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
+function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) {
     const args = {
         rootPath: config.files.rootPath,
         workspacePath: vscode.workspace.rootPath,
@@ -37,7 +37,7 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
         forkArgs.push('--debug=' + config.debugPort);
     }
 
-    const process = fork(testProcess, forkArgs, { cwd: vscode.workspace.rootPath });
+    const process = fork(testProcess, forkArgs, { cwd: vscode.workspace.rootPath, silent: true });
 
     if (debug) {
         vscode.commands.executeCommand('vscode.startDebug', {
@@ -47,7 +47,7 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
             "port": config.debugPort,
             "address": "localhost",
             "sourceMaps": true,
-            "trace": true,
+            //"trace": true,
             "runtimeArgs": [
                 "--nolazy"
             ],
@@ -58,24 +58,39 @@ function runTestsCore(processArgs: Partial<TestProcessArgs>, debug: boolean) {
                 path.join(args.workspacePath, args.rootPath, args.glob)
             ],
         });
+        
+        args.options = { ...args.options, timeout: 360000 };
     }
 
-    return new Promise((resolve, reject) => {
-        let result: any;
+    return new Promise<TestProcessResponse>((resolve, reject) => {
+        let results: any;
+        let stdout: any[] = [];
+
         process.on('message', data => {
-            result = data;
+            results = data;
+        });
+
+        process.stdout.on('data', data => { 
+            if (typeof data !== 'string') { 
+                data = data.toString('utf8');
+            }
+
+            stdout.push(data);
         });
 
         process.on('exit', code => {
             if (code !== 0) {
-                reject(result as string);
+                reject(results as string);
             } else {
-                resolve(result as TestsResults);
+                resolve({
+                    results,
+                    stdout: stdout.join('')
+                } as TestProcessResponse);
             }
         });
 
         if (debug) {
-            // wait a while for debugger to properly attach itself to process before running tests ...        
+            // give debugger some time to properly attach itself before running tests ...        
             setTimeout(() => {
                 process.send(args);
             }, 1000);

@@ -2,15 +2,13 @@
 import * as Mocha from 'mocha';
 import * as path from 'path';
 import { Glob } from 'glob';
-import { TestProcessArgs, TestsResults } from "./Types";
+import { TestProcessRequest, TestsResults } from "./Types";
 
-let args: TestProcessArgs;
-let spec: Mocha.reporters.Spec;
+let args: TestProcessRequest;
 let results: TestsResults;
 const suitePath: string[] = [];
 
 process.on('message', processArgs => {
-    processArgs.options = { ...processArgs.options, timeout: 360000 };
     runTestProcess(processArgs)
         .then(results => {
             process.send(results);
@@ -22,16 +20,9 @@ process.on('message', processArgs => {
         });
 });
 
-export function runTestProcess(processArgs: TestProcessArgs) {
+export function runTestProcess(processArgs: TestProcessRequest) {
     args = processArgs;
     const mocha = createMocha();
-
-    if (args.grep) {
-        console.log();
-        console.log('Grep pattern:');
-        console.log('  ' + args.grep);
-        mocha.grep(new RegExp(args.grep, 'i'));
-    }
 
     if (args.fileName) {
         delete require.cache[args.fileName];
@@ -70,19 +61,27 @@ function createMocha() {
 
     if (args.options && Object.keys(args.options).length > 0) {
         options = { ...args.options };
-        console.log(`Applying Mocha options:\n${indent(JSON.stringify(options, null, 2))}`);
+        console.log(`Applying Mocha options:\n${JSON.stringify(options, null, 2).split('\n').slice(1).slice(0,-1).join('\n').replace(/"([^"]+)"/g, '$1')}\n`);
     } else {
-        console.log(`No Mocha options are configured. You can set it under File > Preferences > Workspace Settings.`);
+        console.log(`No Mocha options are configured.\n  You can set it under File > Preferences > Workspace Settings.\n`);
     }
 
     const mocha = new Mocha(options);
     
-    if (args.setup) {
+    if (args.setup && args.setup.length > 0) {
+        console.log('Setup file(s):');
         for (let setupFile of args.setup) {
             const file = path.join(args.workspacePath, setupFile);
+            console.log(file);
             delete require.cache[file];
             mocha.addFile(file);
         }
+        console.log();
+    }
+
+    if (args.grep) {
+        console.log('Grep pattern:\n  ' + args.grep);
+        mocha.grep(new RegExp(args.grep, 'i'));
     }
 
     mocha.reporter(customReporter);
@@ -113,7 +112,9 @@ function runMocha(mocha: Mocha) {
 }
 
 function customReporter(runner: any, options: any) {
-    spec = new Mocha.reporters.Spec(runner);
+    // to get 'spec' output to stdout ...
+    new Mocha.reporters.Spec(runner);
+
     results = {};
 
     runner
@@ -124,6 +125,7 @@ function customReporter(runner: any, options: any) {
             results[selector] = results[selector] || [];
             results[selector].push({
                 selector: trimArray(suitePath).concat([test.title]),
+                state: 'Success'
             });
         })
         .on('fail', (test: any, err: any) => {
@@ -131,12 +133,7 @@ function customReporter(runner: any, options: any) {
             results[selector] = results[selector] || [];
             results[selector].push({
                 selector: trimArray(suitePath).concat([test.title]),
-                err: {
-                    actual: err.actual,
-                    expected: err.expected,
-                    message: err.message,
-                    stack: err.stack
-                }
+                state: 'Fail'
             });
         });
 }
