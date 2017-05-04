@@ -30,3 +30,6 @@ All notable changes to the "vscode-mocha-test-runner" extension will be document
 
 ## 0.0.14 - 2017_05_03
 - Fixed bug: Unhandled exception when starting mocha in typescript code, that cannot be successfully compiled.
+
+## 0.0.16 - 2017_05_04
+- Fixed bug: Tests end up in failed state now, if transpiled file doesnt exists.
