@@ -64,7 +64,9 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
 
     return new Promise<TestProcessResponse>((resolve, reject) => {
         let results: any;
-        let stdout: any[] = [];
+        let stdout: string[] = [];
+        let stderr: string[] = [];
+        let stderrTimeout: NodeJS.Timer;
 
         process.on('message', data => {
             results = data;
@@ -78,9 +80,23 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             stdout.push(data);
         });
 
+        process.stderr.on('data', data => { 
+            if (typeof data !== 'string') { 
+                data = data.toString('utf8');
+            }
+
+            stderr.push(data);
+            if (!stderrTimeout) { 
+                stderrTimeout = setTimeout(() => { 
+                    results = stderr.join('');
+                    process.kill();
+                }, 500);
+            }
+        });
+
         process.on('exit', code => {
             if (code !== 0) {
-                reject(results as string);
+                reject(results);
             } else {
                 resolve({
                     results,

@@ -257,6 +257,11 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
             return null;
         }
 
+        case ts.SyntaxKind.ArrowFunction: {
+            const obj = node as ts.ArrowFunction;
+            return visitor(sourceFile, obj.body);
+        }    
+
         case ts.SyntaxKind.Identifier: {
             const obj = node as ts.Identifier;
             return obj.text;
@@ -307,6 +312,7 @@ function createCodeLens(testStates: { [title: string]: TestState }, document: vs
     }
 
     if (item.name === 'it') {
+
         const testState = testStates[selector] || 'Inconclusive';
         codeLens.push(new ItCodeLens(new vscode.Range(item.line, 0, item.line, testState.length), document, selector, testState, false));
         codeLens.push(new ItCodeLens(new vscode.Range(item.line, testState.length, item.line, testState.length + 5), document, selector, testState, true));

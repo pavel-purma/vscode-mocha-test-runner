@@ -16,6 +16,7 @@ Tests not writen in javascript that mocha can load (es6 with import command, raz
 - [es5 project](.vscode-test/es5-project): basic usage - no config or transpiling, just plain old javascript
 - [es6 project](.vscode-test/es6-project): tests uses es6 import command - is transpiled to es5 with babel, this configuration can handle jsx syntax - react.js needs to be included via mocha.files.setup)
 - [typescript project](.vscode-test/ts-project) tests writen in typescript - transpiled to es6 without use of import command by tsc, this configuration can handle tsx syntax - react.js needs to be included via mocha.files.setup
+- [typescript project #2](.vscode-test/tsa-project) tests writen in typescript using arrow function syntax - transpiled to es5 by tsc, this configuration can handle tsx syntax - react.js needs to be included via mocha.files.setup
 - [enzyme project](.vscode-test/enzyme-project) test writen in tsx syntax, tests budled with webpack - no need explicitly import react.js for test to work
 - other project types: gulp, grunt-based transpiling, etc. may work too (not tested - im not a gulp/grunt-guru)
 

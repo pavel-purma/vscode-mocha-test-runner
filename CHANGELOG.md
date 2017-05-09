@@ -33,3 +33,6 @@ All notable changes to the "vscode-mocha-test-runner" extension will be document
 
 ## 0.0.16 - 2017_05_04
 - Fixed bug: Tests end up in failed state now, if transpiled file doesnt exists.
+
+## 0.0.17 - 2017_05_09
+- Added support for tests writen in arrow functions.
