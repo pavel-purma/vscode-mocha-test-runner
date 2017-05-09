@@ -23,3 +23,4 @@ Tests not writen in javascript that mocha can load (es6 with import command, raz
 ## Known issues:
 - (Wont fix) Tests not wrapped by describe function are ignored. (mocha is not returning file path for these - no way to unique identify tests with same title in different files)
 - Debugger wont see breakpoints in ts file when compiled with webpack (source maps issue)
+- Mocha wont start in VSCode 1.12 - version 1.11 works fine (throws 'Cannot start debugger' error'
