@@ -96,7 +96,7 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
 
         process.on('exit', code => {
             if (code !== 0) {
-                reject(results);
+                reject(stdout.join('') + '\r\n' + results);
             } else {
                 resolve({
                     results,

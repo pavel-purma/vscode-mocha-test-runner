@@ -27,6 +27,11 @@ export function runTestProcess(processArgs: TestProcessRequest) {
     if (args.fileName) {
         delete require.cache[args.fileName];
         mocha.addFile(args.fileName);
+
+        console.log('Test file:');
+        console.log(args.fileName);
+        console.log();
+
         return runMocha(mocha);
     }
 
@@ -39,10 +44,13 @@ export function runTestProcess(processArgs: TestProcessRequest) {
                 });
             }
 
+            console.log('Test file(s):');
             files.forEach(file => {
                 delete require.cache[file];
                 mocha.addFile(file);
+                console.log(file);
             });
+            console.log();
 
             return runMocha(mocha);
         });
@@ -61,13 +69,13 @@ function createMocha() {
 
     if (args.options && Object.keys(args.options).length > 0) {
         options = { ...args.options };
-        console.log(`Applying Mocha options:\n${JSON.stringify(options, null, 2).split('\n').slice(1).slice(0,-1).join('\n').replace(/"([^"]+)"/g, '$1')}\n`);
+        console.log(`Applying Mocha options:\n${JSON.stringify(options, null, 2).split('\n').slice(1).slice(0, -1).join('\n').replace(/"([^"]+)"/g, '$1')}\n`);
     } else {
         console.log(`No Mocha options are configured.\n  You can set it under File > Preferences > Workspace Settings.\n`);
     }
 
     const mocha = new Mocha(options);
-    
+
     if (args.setup && args.setup.length > 0) {
         console.log('Setup file(s):');
         for (let setupFile of args.setup) {
@@ -82,6 +90,7 @@ function createMocha() {
     if (args.grep) {
         console.log('Grep pattern:\n  ' + args.grep);
         mocha.grep(new RegExp(args.grep, 'i'));
+        console.log();
     }
 
     mocha.reporter(customReporter);
@@ -90,7 +99,7 @@ function createMocha() {
 
 function runMocha(mocha: Mocha) {
     return new Promise<TestsResults>((resolve, reject) => {
-        const callback = (failures: number) => {            
+        const callback = (failures: number) => {
             const keys = Object.keys(results);
             for (let key of keys) {
                 results[key].sort((a, b) => {
@@ -104,6 +113,7 @@ function runMocha(mocha: Mocha) {
         };
 
         try {
+            console.log('Starting mocha ...');
             mocha.run(callback);
         } catch (err) {
             reject(err.message);
@@ -140,12 +150,13 @@ function customReporter(runner: any, options: any) {
 
 function resolveGlob(): Promise<string[]> {
     return new Promise((resolve, reject) => {
-        new Glob(args.glob, { cwd: args.workspacePath, ignore: args.ignore, dot: true }, (err, files) => {
+        const cmd = path.join(args.workspacePath, args.rootPath);
+        new Glob(args.glob, { cwd: cmd, ignore: args.ignore, dot: true }, (err, files) => {
             if (err) {
                 return reject(err);
             }
 
-            files = files.map(file => path.resolve(args.workspacePath, file));
+            files = files.map(file => path.resolve(cmd, file));
             resolve(files);
         });
     });
