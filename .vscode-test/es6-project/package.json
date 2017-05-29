@@ -1,19 +1,19 @@
 {
-  "name": "jsx-project",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "test-build": "babel --out-dir .test --ignore=node_modules,dist .",
-    "test-watch": "babel --out-dir .test --ignore=node_modules,dist --watch .",
-    "test":"mocha .\\.test --colors --recursive",   
-    "build": "babel src --out-dir dist"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.24.0",
-    "babel-core": "^6.24.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-es2015": "^6.24.0",
-    "chai": "^3.5.0",
-    "mocha": "^3.2.0"
-  }
+    "name": "jsx-project",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "test-build": "babel --source-maps --out-dir .output --ignore=node_modules,dist src",
+        "test-watch": "babel --out-dir .output --ignore=node_modules,dist --watch src",
+        "test": "mocha .\\.output\test --colors --recursive",
+        "build": "babel --out-dir .dist --ignore=node_modules,.dist,src/test src"
+    },
+    "devDependencies": {
+        "babel-cli": "6.24.1",
+        "babel-core": "6.24.1",
+        "babel-plugin-transform-runtime": "6.23.0",
+        "babel-preset-es2015": "6.24.1",
+        "chai": "4.0.0",
+        "mocha": "3.4.2"
+    }
 }

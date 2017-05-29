@@ -1,6 +1,6 @@
 import * as Mocha from 'mocha';
 import { expect } from 'chai';
-import { Math } from '../src/Math';
+import { Math } from '../Math';
 
 describe('Math', function () {
     it('Success', function () {
