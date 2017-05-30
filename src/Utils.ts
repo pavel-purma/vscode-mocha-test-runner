@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { config } from "./config";
 import { outputChannel } from "./extension";
 
@@ -14,8 +15,14 @@ export function getFileSelector(fileName: string) {
 export function getDocumentSelector(document: vscode.TextDocument) {
     throwIfNot('getDocumentSelector', document, 'document');
 
-    let selector = path.relative(vscode.workspace.rootPath, document.fileName);
-    selector = path.join(config.files.rootPath, selector);
+    let rootDir = vscode.workspace.rootPath;
+    const tsConfigFile = path.join(vscode.workspace.rootPath, 'tsconfig.json');
+    if (config.sourceDir) {       
+        rootDir = path.join(rootDir, config.sourceDir);        
+    }
+    
+    let selector = path.relative(rootDir, document.fileName);
+    selector = path.join(config.outputDir, selector);
     const index = selector.lastIndexOf('.');
     return (index === -1) ? selector : selector.substring(0, index);
 }

@@ -21,11 +21,11 @@ export function runTestsInFile(fileName: string) {
 
 function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) {
     const args = {
-        rootPath: config.files.rootPath,
+        rootPath: config.outputDir,
         workspacePath: vscode.workspace.rootPath,
-        ignore: config.files.ignore,
+        ignore: config.ignoreFiles,
         glob: config.glob,
-        setup: config.files.setup,
+        setup: config.setupFiles,
         options: config.options,
         ...processArgs
     };
@@ -47,7 +47,7 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             "port": config.debugPort,
             "address": "localhost",
             "sourceMaps": true,
-            //"trace": true,
+            "trace": config.debugTrace,
             "runtimeArgs": [
                 "--nolazy"
             ],
@@ -55,7 +55,7 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
                 "NODE_ENV": "test",
             },
             "outFiles": [
-                path.join(args.workspacePath, args.rootPath, args.glob)
+                path.join(args.workspacePath, args.rootPath, "**/*.js")
             ],
         });
         

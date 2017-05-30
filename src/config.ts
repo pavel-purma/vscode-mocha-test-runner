@@ -5,11 +5,11 @@ interface Config {
     env?: any;
     glob: string;
     debugPort: number;
-    files: {
-        rootPath: string;
-        ignore: string[];
-        setup?: string[];
-    };
+    sourceDir: string;
+    outputDir: string;
+    setupFiles: string[];
+    ignoreFiles: string[];    
+    debugTrace: string;
 }
 
 export const config: Config = vscode.workspace.getConfiguration('mocha') as any;

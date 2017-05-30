@@ -7,8 +7,6 @@
         "out": true,
         "**/node_modules/": true
     },
-    "mocha.files.rootPath": ".test",
-    "mocha.files.setup": [
-        ".vscode/test-setup.js"
-    ]
+    "mocha.sourceDir": "src",
+    "mocha.outputDir": ".output"
 }

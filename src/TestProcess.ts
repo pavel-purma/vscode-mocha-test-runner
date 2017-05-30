@@ -1,3 +1,4 @@
+// DEBUGGER may hit invisible breakpoint on "use strict" line above ... just hit F5 to continue.
 // !! no import to vscode !!  (used by child_process)
 import * as Mocha from 'mocha';
 import * as path from 'path';
