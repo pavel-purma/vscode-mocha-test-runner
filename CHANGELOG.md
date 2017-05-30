@@ -1,3 +1,12 @@
+## 0.1.1 - 2017_05_29
+- Fixed bug: Mocha should no longer execute tests with same identifier in different file
+
+## 0.1.0 - 2017_05_29
+- Breaking change: configuration properties renamed.
+- Breakpoints set in sources, that are transpiled should now work correctly ...
+- Known issue: debugger will break on first line of code [TestProcess.js, line 1] - just hit F5 to continue ...
+- Added tsx-project example: React shadow render tests
+
 ## 0.0.19 - 2017_05_25
 - Fixed bug: mocha now search correctly in rootPath and not in entire project.
 - Fixed bug: missing stdout in output if error occurs.
