@@ -35,7 +35,7 @@ export function commandRunTests(codeLens: TestCodeLensBase) {
             }
             codeLensProvider.updateTestStates(selector, states);
         })
-        .then(() => runTests(codeLens instanceof ItCodeLens && codeLens.debug, codeLens.grep))
+        .then(() => runTests(codeLens instanceof ItCodeLens && codeLens.debug, codeLens.grep, [selector]))
         .then(response => {
             updateTestStates(states, selector, response.results[selector] || [], codeLens.selectors);
             outputChannel.append(response.stdout);
