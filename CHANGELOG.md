@@ -1,5 +1,6 @@
-## 0.1.2 - 2017_05_31
-- FIxed bug: updated package contribution configuration
+## 0.1.3 - 2017_05_31
+- Fixed bug: updated package contribution configuration
+- Fixed bug: random warning will no longer kill debugger process.
 
 ## 0.1.1 - 2017_05_29
 - Fixed bug: Mocha should no longer execute tests with same identifier in different file

@@ -84,6 +84,11 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             if (typeof data !== 'string') { 
                 data = data.toString('utf8');
             }
+            
+            if (data.startsWith('Warning:')) {
+                stdout.push(data);
+                return;
+            }
 
             stderr.push(data);
             if (!stderrTimeout) { 
