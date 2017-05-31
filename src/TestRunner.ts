@@ -23,9 +23,9 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
     const args = {
         rootPath: config.outputDir,
         workspacePath: vscode.workspace.rootPath,
-        ignore: config.ignoreFiles,
+        ignore: config.ignoreGlobs,
         glob: config.glob,
-        setup: config.setupFiles,
+        setup: config.setupFile,
         options: config.options,
         ...processArgs
     };

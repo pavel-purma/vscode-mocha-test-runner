@@ -2,7 +2,7 @@
     "name": "vscode-mocha-test-runner",
     "displayName": "Mocha test runner",
     "description": "Code lens provider and runner for mocha unit tests.",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "publisher": "cstechnologies",
     "icon": "images/icon.png",
     "repository": {
@@ -27,15 +27,15 @@
     "contributes": {
         "configuration": {
             "type": "object",
-            "title": "Mocha options",
+            "title": "Mocha test runner configuration properties.",
             "properties": {
                 "mocha.options": {
                     "default": {},
-                    "description": "Option passed to Mocha"
+                    "description": "Options passed to Mocha."
                 },
                 "mocha.env": {
                     "default": {},
-                    "description": "Environment variables to run your tests"
+                    "description": "Environment variables to run your tests."
                 },
                 "mocha.glob": {
                     "default": "**/*.test.js",
@@ -47,34 +47,40 @@
                     "description": "Mocha debug port.",
                     "type": "number"
                 },
-                "mocha.files.rootPath": {
+                "mocha.sourceDir": {
                     "default": "",
-                    "description": "Directory with test files relatice to root path",
+                    "description": "Relative path to directory, where source files are.",
                     "type": "string"
                 },
-                "mocha.files.ignore": {
+                "mocha.outputDir": {
+                    "default": "",
+                    "description": "Relative path to directory, where transpiled source fiels are.",
+                    "type": "string"
+                },
+                "mocha.setupFile": {
+                    "default": "",
+                    "description": "Name of script, that will be imported into mocha (Ex: jsdom init script).",
+                    "type": "string"
+                },
+                "mocha.ignoreGlobs": {
                     "default": [
                         "**/.git/**/*",
                         "**/node_modules/**/*"
                     ],
-                    "description": "Globs to ignore when searching for test files",
+                    "description": "Glob ignore parameter when searching for test files.",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "mocha.files.setup": {
-                    "default": [],
-                    "description": "Name of scripts, that will be imported into mocha. (Ex: jsdom init script)",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "mocha.debugTrace": {
+                    "default": "",
+                    "description": "'Trace' parameter for vscode debugger.",
+                    "type": "string"
                 }
             }
         },
-        "commands": [
-            {
+        "commands": [{
                 "command": "vscode-mocha-test-runner.run-all-tests",
                 "title": "Mocha test runner - run all tests"
             },
@@ -83,8 +89,7 @@
                 "title": "Mocha test runner - run all tests in current file"
             }
         ],
-        "keybindings": [
-            {
+        "keybindings": [{
                 "command": "vscode-mocha-test-runner.run-all-tests",
                 "key": "ctrl+R ctrl+T"
             },

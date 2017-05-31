@@ -7,12 +7,12 @@ export type TestsResults = { [file: string]: TestResult[] };
 export type TestResult = { selector: string[], state: 'Success' | 'Fail' };
 
 export type TestProcessRequest = {
-    rootPath: string, // config.files.rootPath
-    workspacePath: string, // vscode.workspace.rootPath
-    ignore: string[], // config.files.ignore
-    glob: string;  // config.glob, '**/*.test.js'
-    setup: string[]; // config.files.setup
-    options: any; // config.options
+    rootPath: string,
+    workspacePath: string,
+    ignore: string[],
+    glob: string;
+    setup: string;
+    options: any;
 
     fileName?: string;
     grep?: string;

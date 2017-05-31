@@ -1,3 +1,6 @@
+## 0.1.2 - 2017_05_31
+- FIxed bug: updated package contribution configuration
+
 ## 0.1.1 - 2017_05_29
 - Fixed bug: Mocha should no longer execute tests with same identifier in different file
 

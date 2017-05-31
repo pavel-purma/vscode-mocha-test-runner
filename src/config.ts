@@ -7,8 +7,8 @@ interface Config {
     debugPort: number;
     sourceDir: string;
     outputDir: string;
-    setupFiles: string[];
-    ignoreFiles: string[];    
+    setupFile: string;
+    ignoreGlobs: string[];    
     debugTrace: string;
 }
 

@@ -78,14 +78,10 @@ function createMocha() {
     const mocha = new Mocha(options);
 
     if (args.setup && args.setup.length > 0) {
-        console.log('Setup file(s):');
-        for (let setupFile of args.setup) {
-            const file = path.join(args.workspacePath, setupFile);
-            console.log(file);
-            delete require.cache[file];
-            mocha.addFile(file);
-        }
-        console.log();
+        const file = path.join(args.workspacePath, args.setup);
+        console.log('Setup file:\n  ' + file + '\n');
+        delete require.cache[file];
+        mocha.addFile(file);
     }
 
     if (args.grep) {
