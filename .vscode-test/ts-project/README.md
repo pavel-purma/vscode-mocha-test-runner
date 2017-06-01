@@ -1,7 +1,7 @@
 # ts-project
 
-Source and test files are writen in typescript and transpiled to es6.
+Source and test files are writen in typescript and transpiled with to es6 with tsc. - using **npm run test:watch** command
 
-Property "mocha.files.rootPath" in .vscode/settings.json must be specified - to tell mocha, where transpiled sources are.
+Properties "**mocha.sourceDir**" and "**mocha.outputDir**" in **.vscode/settings.json** must be specified.
 
-This configuration will work with react .tsx files.
+This configuration will work with react  .tsx files - babel preset is needed.

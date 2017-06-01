@@ -8,7 +8,7 @@ describe('Math', function () {
         expect(math.sum(1, 2)).to.equal(3);
     });
 
-    it('Fail', function () {
+    it('Arrow function will work too', () => {
         var math = new Math();
         expect(math.sum(1, 2)).to.equal(0);
     });

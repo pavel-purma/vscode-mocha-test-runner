@@ -3,8 +3,8 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "test-build": "babel --source-maps --out-dir .output --ignore=node_modules,dist src",
-        "test-watch": "babel --out-dir .output --ignore=node_modules,dist --watch src",
+        "test:build": "babel --source-maps --out-dir .output --ignore=node_modules,dist src",
+        "test:watch": "npm run test:build -- --watch",
         "test": "mocha .\\.output\test --colors --recursive",
         "build": "babel --out-dir .dist --ignore=node_modules,.dist,src/test src"
     },

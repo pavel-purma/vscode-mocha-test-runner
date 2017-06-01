@@ -3,8 +3,8 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "test-build": "tsc --project tsconfig.tests.json",
-        "test-watch": "tsc --project tsconfig.tests.json --watch",
+        "test:build": "tsc --project tsconfig.tests.json",
+        "test:watch": "npm run test:build -- --watch",
         "test": "mocha ./.output/test --colors --recursive",
         "build": "tsc"
     },
