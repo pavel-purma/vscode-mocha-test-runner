@@ -12,7 +12,6 @@ describe('Utility', function() {
     });
 
     it('Fail', function() {
-        console.log('tu');
         expect(utils.add(1, 2)).to.equal(0);
     });
 
