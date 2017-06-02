@@ -1,3 +1,7 @@
+## 0.1.4 - 2017_06_02
+- Fixed bug: tests, that used condole.error failed without writing error message to console
+- Fixed bug: code lens was hardcoded and didnt respect mocha.glob configuration
+
 ## 0.1.3 - 2017_05_31
 - Fixed bug: updated package contribution configuration
 - Fixed bug: random warning will no longer kill debugger process.
