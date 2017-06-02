@@ -17,21 +17,25 @@ export function getDocumentSelector(document: vscode.TextDocument) {
 
     let rootDir = vscode.workspace.rootPath;
     const tsConfigFile = path.join(vscode.workspace.rootPath, 'tsconfig.json');
-    if (config.sourceDir) {       
-        rootDir = path.join(rootDir, config.sourceDir);        
+    if (config.sourceDir) {
+        rootDir = path.join(rootDir, config.sourceDir);
     }
-    
+
     let selector = path.relative(rootDir, document.fileName);
     selector = path.join(config.outputDir, selector);
     const index = selector.lastIndexOf('.');
     return (index === -1) ? selector : selector.substring(0, index);
 }
 
+
+const index = config.glob.lastIndexOf('.');
+const patternBase = config.glob.substr(0, index);
+
 export const languages = [
-    { language: 'javascript', pattern: '**/*.test.js' },
-    { language: 'javascriptreact', pattern: '**/*.test.jsx' },
-    { language: 'typescript', pattern: '**/*.test.ts' },
-    { language: 'typescriptreact', pattern: '**/*.test.tsx' }
+    { language: 'javascript', pattern: patternBase + '.js' },
+    { language: 'javascriptreact', pattern: patternBase + '.jsx' },
+    { language: 'typescript', pattern: patternBase + '.ts' },
+    { language: 'typescriptreact', pattern: patternBase + '.tsx' }
 ];
 
 export function throwIfNot(source: string, value: any, name: string) {

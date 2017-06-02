@@ -67,6 +67,11 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
         let stdout: string[] = [];
         let stderr: string[] = [];
         let stderrTimeout: NodeJS.Timer;
+        let pendingReject: boolean;
+
+        const doReject = () => {
+            reject(stdout.join('') + '\r\n' + stderr.join(''));
+        };
 
         process.on('message', data => {
             results = data;
@@ -93,15 +98,19 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             stderr.push(data);
             if (!stderrTimeout) { 
                 stderrTimeout = setTimeout(() => { 
-                    results = stderr.join('');
                     process.kill();
+                    doReject();
                 }, 500);
             }
         });
 
         process.on('exit', code => {
             if (code !== 0) {
-                reject(stdout.join('') + '\r\n' + results);
+                if (stderrTimeout) {
+                    pendingReject = true;
+                } else { 
+                    doReject();
+                }    
             } else {
                 resolve({
                     results,
