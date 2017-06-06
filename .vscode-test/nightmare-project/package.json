@@ -1,0 +1,21 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:build": "tsc --project tsconfig.tests.json",
+    "test:watch": "npm run test:build -- --watch",
+    "test": "mocha ./.output/test --colors --recursive",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/chai": "3.5.2",
+    "@types/mocha": "2.2.41",
+    "@types/nightmare": "1.6.30",
+    "@types/node": "7.0.22",
+    "chai": "4.0.0",
+    "mocha": "3.4.2",
+    "nightmare": "2.10.0",
+    "typescript": "2.3.3"
+  }
+}
