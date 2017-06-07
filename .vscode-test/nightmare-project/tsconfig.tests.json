@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noEmitOnError": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "sourceMap": true,
+        "target": "es5",
+        "lib": ["es5", "es6", "dom"],
+        "outDir": ".output",
+        "rootDir": "src"
+    }
+}
