@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TestsCodeLensProvider, TestCodeLensBase } from "./TestsCodeLensProvider";
 import { languages } from "./Utils";
-import { commandRunTests, commandRunAllTests, commandRunFileTests } from "./commands";
+import { commandRunTests, commandRunAllTests, commandRunFileTests, commandRunScript } from "./commands";
 
 export let codeLensProvider: TestsCodeLensProvider;
 export let outputChannel: vscode.OutputChannel;
@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-test', commandRunTests));
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-all-tests', commandRunAllTests));
         context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-file-tests', commandRunFileTests));
+        context.subscriptions.push(vscode.commands.registerCommand('vscode-mocha-test-runner.run-script', commandRunScript));
 
         context.subscriptions.push(vscode.languages.registerCodeLensProvider(languages, codeLensProvider));
 

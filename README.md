@@ -6,7 +6,8 @@ Lense on **it** function shows last test result and can be used to run given tes
 
 Lense on **describe** shows aggregated results from nested **it** and can be used to run all tests in given group / only test with specific status.
 
-Tests not writen in javascript that mocha can load (es6 with import command, razor syntax, typescript, etc.) needs to be transpiled to es5 or es6 without import command - see example projects in .vscode-test directory. Mocha is searching for transpiled scripts ```**/*.test.js``` (configurable - **mocha.glob**) in project root directory or in **mocha.files.rootPath** (appended to project root directory).
+Tests not writen in javascript that mocha can load (es6 with import command, razor syntax, typescript, etc.) needs to be transpiled to es5 or es6 without import command - see example projects in .vscode-test directory. Mocha is searching for transpiled scripts ```**/*.test.js``` (configurable - **mocha.glob**) in project root directory or in **mocha.sourceDir** (appended to project root directory - used in tandem with **mocha.outputDir** for non es5 sources - see examples).
+
 
 ## Preview:
 
@@ -17,14 +18,14 @@ Tests not writen in javascript that mocha can load (es6 with import command, raz
 - [es6 project](.vscode-test/es6-project): tests uses es6 import command - is transpiled to es5 with babel, this configuration can handle jsx syntax - react.js needs to be included via mocha.files.setup)
 - [typescript project](.vscode-test/ts-project) tests writen in typescript - transpiled to es6 without use of import command by tsc, this configuration can handle tsx syntax - react.js needs to be included via mocha.files.setup
 - [typescript+react project](.vscode-test/tsx-project) test writen in tsx syntax, tests transpiled with tsc - no need explicitly import react.js for test to work
+- [electron+nightmare](.vscode-test/nightmare-project) test using [nightmare](https://www.npmjs.com/package/nightmare) - NOT WORKING ... still trying to figure out why ... (if anyone crack it please send me how)
 - other project types: gulp, grunt-based transpiling, etc. may work too (not tested)
+- **I welcome any other usage examples ...**
 
 ## Known issues:
 - (Wont fix) Tests not wrapped by describe function are ignored. (mocha is not returning file path for these - no way to unique identify tests with same title in different files)
 - Debugger wont see breakpoints in ts file when compiled with webpack (source maps issue)
-- (Fixed?) Mocha wont start in VSCode 1.12 (throws 'Cannot start debugger' error')
-  - 1.11 works fine 
-  - 1.12.2 works too
 
 ## TODO:
-- remove "mocha.SourceDir" property and use sourcemaps to search for original source file from transpiled file
+- remove "mocha.SourceDir" property and use sourcemaps to search for original source file from transpiled file.
+- auto run 'compiler' command if transpiled sources arent found instead 'File not found' message.

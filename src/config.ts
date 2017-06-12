@@ -10,6 +10,7 @@ interface Config {
     setupFile: string;
     ignoreGlobs: string[];    
     debugTrace: string;
+    compilerScript: string;
 }
 
 export const config: Config = vscode.workspace.getConfiguration('mocha') as any;

@@ -1,3 +1,9 @@
+## 0.1.5 - 2017_06_12 [not published]
+- Added new command 'Mocha test runner - run script from package.json' to execute any script in package json inside vscode 'output' channel
+  - EXPERIMENTAL - may fail for no reason ;)
+  - only one script should be executed (multiple scripts can be executed, but only last one will print into output channel)
+  - plan is to use this as automatic compilation of sources - currently needed to compile sources externally (eg. via npm run compile)
+  
 ## 0.1.4 - 2017_06_02
 - Fixed bug: tests, that used condole.error failed without writing error message to console
 - Fixed bug: code lens was hardcoded and didnt respect mocha.glob configuration
