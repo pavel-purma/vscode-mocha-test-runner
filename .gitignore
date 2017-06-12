@@ -3,3 +3,4 @@
 npm-debug.log
 /*.vsix
 .vscode/symbols.json
+/publish.cmd
