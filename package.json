@@ -90,7 +90,8 @@
                 }
             }
         },
-        "commands": [{
+        "commands": [
+            {
                 "command": "vscode-mocha-test-runner.run-all-tests",
                 "title": "Mocha test runner - run all tests"
             },
@@ -103,7 +104,8 @@
                 "title": "Mocha test runner - run script from package.json"
             }
         ],
-        "keybindings": [{
+        "keybindings": [
+            {
                 "command": "vscode-mocha-test-runner.run-all-tests",
                 "key": "ctrl+R ctrl+T"
             },
