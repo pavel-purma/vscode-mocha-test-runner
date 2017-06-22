@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 interface Config {
+    enabled: boolean,
     options?: any;
     env?: any;
     glob: string;

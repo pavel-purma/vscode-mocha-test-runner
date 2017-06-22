@@ -1,3 +1,6 @@
+## 0.2.0 - 2017_06_22
+- Added 'enabled' configuration to enable plugin
+
 ## 0.1.4 - 2017_06_02
 - Fixed bug: tests, that used condole.error failed without writing error message to console
 - Fixed bug: code lens was hardcoded and didnt respect mocha.glob configuration
