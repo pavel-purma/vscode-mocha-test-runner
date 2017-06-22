@@ -18,6 +18,7 @@
     "activationEvents": [
         "onCommand:vscode-mocha-test-runner.run-all-tests",
         "onCommand:vscode-mocha-test-runner.run-file-tests",
+        "onCommand:vscode-mocha-test-runner.run-script",
         "onLanguage:javascript",
         "onLanguage:javascriptreact",
         "onLanguage:typescript",
@@ -81,6 +82,11 @@
                     "default": "",
                     "description": "'Trace' parameter for vscode debugger.",
                     "type": "string"
+                },
+                "mocha.compilerScript": {
+                    "default": "",
+                    "description": "Package.json script, that will server as compile command",
+                    "type": "string"
                 }
             }
         },
@@ -91,6 +97,10 @@
             {
                 "command": "vscode-mocha-test-runner.run-file-tests",
                 "title": "Mocha test runner - run all tests in current file"
+            },
+            {
+                "command": "vscode-mocha-test-runner.run-script",
+                "title": "Mocha test runner - run script from package.json"
             }
         ],
         "keybindings": [{
@@ -100,6 +110,10 @@
             {
                 "command": "vscode-mocha-test-runner.run-file-tests",
                 "key": "ctrl+R ctrl+F"
+            },
+            {
+                "command": "vscode-mocha-test-runner.run-script",
+                "key": "ctrl+R ctrl+S"
             }
         ]
     },
@@ -110,12 +124,13 @@
         "test": "node ./node_modules/vscode/bin/test"
     },
     "dependencies": {
-        "vscode": "^1.1.0",
         "chai": "^3.5.0",
-        "mocha": "^3.2.0",
         "deep-extend": "^0.4.1",
         "escape-regexp": "0.0.1",
-        "typescript": "^2.2.2"
+        "mocha": "^3.2.0",
+        "npm-run": "^4.1.2",
+        "typescript": "^2.2.2",
+        "vscode": "^1.1.0"
     },
     "devDependencies": {
         "@types/chai": "^3.4.35",

@@ -9,9 +9,13 @@ import { runTests } from "./TestRunner";
 import { codeLensProvider, outputChannel } from "./extension";
 import { config } from "./config";
 import { TestResult, TestStates, FileTestStates, TestState } from "./Types";
+import { spawn, SpawnOptions, ChildProcess } from 'child_process';
+const npmRun = require('npm-run');
 
 type TestContext = { lines: string[], passing: number, failing: number };
 
+var compilerProcess: ChildProcess;
+var compilerOutputChannel: vscode.OutputChannel;
 export function commandRunTests(codeLens: TestCodeLensBase) {
     throwIfNot('commandRunTests', codeLens, 'codeLens');
 
@@ -106,6 +110,50 @@ export function commandRunFileTests() {
         .then(() => codeLensProvider.updateAllRunningStatesTo('Fail'));
 }
 
+export function commandRunScript() {
+    if (!config.compilerScript) {
+        vscode.window.showWarningMessage('No \'mocha.script\' script specified!');
+        return;
+    }
+    
+    if (compilerOutputChannel) {
+        compilerOutputChannel.clear();
+    } else {
+        compilerOutputChannel = vscode.window.createOutputChannel('Mocha test runner - script');
+        compilerOutputChannel.show();
+    }
+
+    compilerProcess = npmRun.spawn('npm', ['run', config.compilerScript], {
+        cwd: vscode.workspace.rootPath,
+        env: { ...process.env, path: process.env.path + ';' + path.join(vscode.workspace.rootPath, 'node_modules/.bin') }
+    });
+
+    compilerProcess.stdout.on('data', data => {
+        if (typeof data !== 'string') {
+            data = data.toString();
+        }
+        compilerOutputChannel.append(data);
+    });
+
+    compilerProcess.stderr.on('data', data => {
+        if (typeof data !== 'string') {
+            data = data.toString();
+        }
+        compilerOutputChannel.append(data);
+    });
+
+    compilerProcess.on('close', code => {
+        compilerOutputChannel.appendLine(`child process exited with code ${code}`);
+    });
+}
+
+export function commandStopCompiling() {
+    if (compilerProcess) {
+        compilerProcess.kill();
+        compilerOutputChannel.dispose();
+    }
+}
+
 function updateTestStates(states: TestStates, fileSelector: string, results: TestResult[], selectors?: string[], selectorsState: TestState = 'Inconclusive') {
     throwIfNot('updateTestStates', states, 'states');
     throwIfNot('updateTestStates', fileSelector, 'fileSelector');
@@ -129,9 +177,73 @@ function testFileExists(fileSelector: string) {
         fs.exists(testFile, exists => {
             if (exists) {
                 resolve();
-            } else { 
+            } else {
                 reject('Test file \'' + testFile + '\' was not found (Didnt u forget to transpile sources?)');
             }
         });
     });
+}
+
+function nodeJSPath() {
+    return new Promise<string>((resolve, reject) => {
+        const paths = process.env.path.split(process.platform === 'win32' ? ';' : ':');
+
+        const searchPaths = [].concat(
+            paths.map(p => path.resolve(p, 'node')),
+            paths.map(p => path.resolve(p, 'node.exe'))
+        );
+
+        Promise.all(searchPaths.map(p => access(p).then(() => p, err => false)))
+            .then(results => {
+                results = trimArray(results);
+
+                if (results.length) {
+                    resolve(results[0]);
+                } else {
+                    const err = new Error('cannot find nodejs');
+                    (err as any).code = 'ENOENT';
+                    reject(err);
+                }
+            }, err => reject(err));
+    });
+}
+
+function npmPath() {
+    return new Promise<string>((resolve, reject) => {
+        const paths = process.env.path.split(process.platform === 'win32' ? ';' : ':');
+        const searchPaths = [].concat(
+            paths.map(p => path.resolve(p, process.platform === 'win32' ? 'npm.cmd' : 'npm'))
+        );
+
+        Promise.all(searchPaths.map(p => access(p).then(() => p, err => false)))
+            .then(results => {
+                results = trimArray(results);
+
+                if (results.length) {
+                    resolve(results[0]);
+                } else {
+                    const err = new Error('cannot find npm');
+                    (err as any).code = 'ENOENT';
+                    reject(err);
+                }
+            }, err => reject(err));
+    });
+}
+
+function trimArray<T>(array: T[]): T[] {
+    return array.reduce((trimmed, item) => {
+        item && trimmed.push(item);
+        return trimmed;
+    }, []);
+}
+
+function access(path: string) {
+    return new Promise<string>((resolve, reject) => {
+        fs.access(path, err => {
+            if (err) {
+                reject(err);
+            }
+            resolve(path);
+        })
+    })
 }

@@ -7,5 +7,6 @@
         "**/node_modules/": true
     },
     "mocha.sourceDir": "src",
-    "mocha.outputDir": ".output"
+    "mocha.outputDir": ".output",
+	"mocha.compilerScript": "test:watch"
 }
