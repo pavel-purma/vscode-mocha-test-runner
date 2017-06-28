@@ -6,7 +6,8 @@
     "search.exclude": {
         "**/node_modules/": true
     },
+    "mocha.enabled": true,
     "mocha.sourceDir": "src",
     "mocha.outputDir": ".output",
-	"mocha.compilerScript": "test:watch"
+    "mocha.compilerScript": "test:watch"
 }
