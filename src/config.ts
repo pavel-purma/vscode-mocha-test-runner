@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 interface Config {
-    enabled: boolean,
+    enabled: boolean | null,
     options?: any;
     env?: any;
     glob: string;
@@ -9,9 +9,28 @@ interface Config {
     sourceDir: string;
     outputDir: string;
     setupFile: string;
-    ignoreGlobs: string[];    
+    ignoreGlobs: string[];
     debugTrace: string;
     compilerScript: string;
+
+    update: (section: string, value: any) => void;
 }
 
-export const config: Config = vscode.workspace.getConfiguration('mocha') as any;
+const get = <T>(section: string) => vscode.workspace.getConfiguration('mocha').get<T>(section);
+
+export const config: Config = {
+    get enabled() { return get<boolean | null>('enabled'); },
+    get options() { return get<any>('options'); },
+    get env() { return get<any>('env'); },
+    get glob() { return get<string>('glob'); },
+    get debugPort() { return get<number>('debugPort'); },
+    get sourceDir() { return get<string>('sourceDir'); },
+    get outputDir() { return get<string>('outputDir'); },
+    get setupFile() { return get<string>('setupFile'); },
+    get ignoreGlobs() { return get<string[]>('ignoreGlobs'); },
+    get debugTrace() { return get<string>('debugTrace'); },
+    get compilerScript() { return get<string>('compilerScript'); },
+    update: (section: string, value: any) => {
+        vscode.workspace.getConfiguration('mocha').update(section, value);
+    }
+};

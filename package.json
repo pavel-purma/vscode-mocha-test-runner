@@ -2,7 +2,7 @@
     "name": "vscode-mocha-test-runner",
     "displayName": "Mocha test runner",
     "description": "Code lens provider and runner for mocha unit tests.",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "cstechnologies",
     "icon": "images/icon.png",
     "repository": {
@@ -31,8 +31,9 @@
             "title": "Mocha test runner configuration properties.",
             "properties": {
                 "mocha.enabled": {
-                    "default": false,
-                    "description": "Enable runner"
+                    "default": null,
+                    "description": "Enable runner",
+                    "type": "boolean"
                 },
                 "mocha.options": {
                     "default": {},
@@ -90,8 +91,7 @@
                 }
             }
         },
-        "commands": [
-            {
+        "commands": [{
                 "command": "vscode-mocha-test-runner.run-all-tests",
                 "title": "Mocha test runner - run all tests"
             },
@@ -104,8 +104,7 @@
                 "title": "Mocha test runner - run script from package.json"
             }
         ],
-        "keybindings": [
-            {
+        "keybindings": [{
                 "command": "vscode-mocha-test-runner.run-all-tests",
                 "key": "ctrl+R ctrl+T"
             },

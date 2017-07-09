@@ -1,3 +1,8 @@
+## 0.2.1 - 2017_07_09
+- Extension shows information message if not enabled instead of message in log.
+- config should not need restart to affect changes
+- added new test project that is not using default **/*.test.js glob pattern
+
 ## 0.2.0 - 2017_06_22
 - Added 'enabled' configuration to enable plugin
 
