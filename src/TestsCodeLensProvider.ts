@@ -81,7 +81,7 @@ export class TestsCodeLensProvider implements vscode.CodeLensProvider {
             this._items[selector] = sourceFile.statements.map(statement => visitor(sourceFile, statement))
                 .filter(o => o)
                 // filter out *it* function calls that arent wrapped by *describe* function - mocha dont return file path for these ...
-                .filter((o: Item) => o && o.name === 'describe');
+                .filter((o: Item) => o && (o.name === 'describe' || o.name === 'suite'));
         }
 
         const testStates = this._testStates[selector] || {};
@@ -147,7 +147,9 @@ export abstract class TestCodeLensBase extends vscode.CodeLens {
 
 type DescribeItem = { name: 'describe'; line: number; title: string; parent: DescribeItem; children: Item[]; }
 type ItItem = { name: 'it'; line: number; title: string; parent: DescribeItem; }
-type Item = DescribeItem | ItItem;
+type SuiteItem = { name: 'suite'; line: number; title: string; parent: SuiteItem; children: Item[]; };
+type TestItem = { name: 'test'; line: number; title: string; parent: SuiteItem; };
+type Item = DescribeItem | ItItem | SuiteItem | TestItem;
 type createCodeLensResult = { tests: number, inconclusive: string[], running: string[], success: string[], fail: string[] };
 
 class DescribeCodeLens extends TestCodeLensBase {
@@ -221,7 +223,8 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
             const obj = node as ts.CallExpression;
             const name = visitor(sourceFile, obj.expression);
             switch (name) {
-                case 'describe': {
+                case 'describe':
+                case 'suite': {
                     let children = visitor(sourceFile, obj.arguments[1]);
                     if (!Array.isArray(children)) {
                         children = [children];
@@ -229,7 +232,7 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
                     // known bug (wont fix): this will return wrong position:
                     // describe /* multiline comment 
                     //             here with character sequence *describe* in it * /('title', function() { });
-                    const pos = sourceFile.text.lastIndexOf('describe', obj.arguments[0].pos);
+                    const pos = sourceFile.text.lastIndexOf(name, obj.arguments[0].pos);
                     const result = {
                         name,
                         line: sourceFile.getLineAndCharacterOfPosition(pos).line,
@@ -238,19 +241,21 @@ function visitor(sourceFile: ts.SourceFile, node: ts.Node) {
                     };
 
                     children.filter(o => o).forEach(o => o.parent = result);
-                    return result as DescribeItem;
+                    return name === 'describe' ? result as DescribeItem : result as SuiteItem;
                 }
 
-                case 'it': {
+                case 'it':
+                case 'test': {
                     // known bug (wont fix): this will return wrong position:
                     // it /* multiline comment 
                     //             here with character sequence *it* in it * /('title', function() { });
-                    const pos = sourceFile.text.lastIndexOf('it', obj.arguments[0].pos);
-                    return {
+                    const pos = sourceFile.text.lastIndexOf(name, obj.arguments[0].pos);
+                    const result = {
                         name,
                         line: sourceFile.getLineAndCharacterOfPosition(pos).line,
                         title: visitor(sourceFile, obj.arguments[0])
-                    } as ItItem;
+                    };
+                    return name === 'it' ? result as ItItem : result as TestItem;
                 }
             }
 
@@ -311,7 +316,7 @@ function createCodeLens(testStates: { [title: string]: TestState }, document: vs
         selector = parentSelector + ' ' + selector;
     }
 
-    if (item.name === 'it') {
+    if (item.name === 'it' || item.name === 'test') {
 
         const testState = testStates[selector] || 'Inconclusive';
         codeLens.push(new ItCodeLens(new vscode.Range(item.line, 0, item.line, testState.length), document, selector, testState, false));
