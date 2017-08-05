@@ -1,10 +1,10 @@
 # Mocha test runner 
 
-Creates code lens before each **describe** and **it** function call in test files.
+Creates code lens before each **describe**, **it**, **suite** and **test** function call in test files.
 
-Lense on **it** function shows last test result and can be used to run given test (using mocha --grep pattern - tests titles needs to be unique otherwise more than one test will be executed).
+Lense on **it** and **test** function shows last test result and can be used to run given test (using mocha --grep pattern - tests titles needs to be unique otherwise more than one test will be executed).
 
-Lense on **describe** shows aggregated results from nested **it** and can be used to run all tests in given group / only test with specific status.
+Lense on **describe** and **suite** shows aggregated results from nested **it** and **test** and can be used to run all tests in given group / only test with specific status.
 
 Tests not writen in javascript that mocha can load (es6 with import command, razor syntax, typescript, etc.) needs to be transpiled to es5 or es6 without import command - see example projects in .vscode-test directory. Mocha is searching for transpiled scripts ```**/*.test.js``` (configurable - **mocha.glob**) in project root directory or in **mocha.sourceDir** (appended to project root directory - used in tandem with **mocha.outputDir** for non es5 sources - see examples).
 
