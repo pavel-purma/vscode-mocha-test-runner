@@ -1,3 +1,6 @@
+## 0.2.2 - 2017_08_07
+- PR #8: Added support for TDD style suite and test methods
+
 ## 0.2.1 - 2017_07_10
 - Extension shows information message if not enabled instead of message in log.
 - config should not need restart to affect changes
