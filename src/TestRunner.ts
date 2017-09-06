@@ -37,7 +37,7 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
         forkArgs.push('--debug=' + config.debugPort);
     }
 
-    const process = fork(testProcess, forkArgs, { cwd: vscode.workspace.rootPath, silent: true });
+    const process = fork(testProcess, forkArgs, { cwd: vscode.workspace.rootPath, silent: true, env: config.env });
 
     if (debug) {
         vscode.commands.executeCommand('vscode.startDebug', {

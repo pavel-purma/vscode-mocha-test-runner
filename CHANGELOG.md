@@ -1,3 +1,6 @@
+## 0.2.3 - 2017_09_06
+- added env variable to forking mocha root process
+
 ## 0.2.2 - 2017_08_07
 - PR #8: Added support for TDD style suite and test methods
 
