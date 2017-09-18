@@ -1,3 +1,6 @@
+## 0.2.4 - 2017_18_09
+- 'No Mocha options are configured.' message will be no longer showing when settings 'mocha.options' contains empty object.
+
 ## 0.2.3 - 2017_09_06
 - added env variable to forking mocha root process
 

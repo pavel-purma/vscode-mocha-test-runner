@@ -68,9 +68,11 @@ function createMocha() {
         bail?: boolean;
     } = undefined;
 
-    if (args.options && Object.keys(args.options).length > 0) {
-        options = { ...args.options };
-        console.log(`Applying Mocha options:\n${JSON.stringify(options, null, 2).split('\n').slice(1).slice(0, -1).join('\n').replace(/"([^"]+)"/g, '$1')}\n`);
+    if (args.options) {
+        if (Object.keys(args.options).length > 0) {
+            options = { ...args.options };
+            console.log(`Applying Mocha options:\n${JSON.stringify(options, null, 2).split('\n').slice(1).slice(0, -1).join('\n').replace(/"([^"]+)"/g, '$1')}\n`);
+        }    
     } else {
         console.log(`No Mocha options are configured.\n  You can set it under File > Preferences > Workspace Settings.\n`);
     }
