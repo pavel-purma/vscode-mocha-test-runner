@@ -1,3 +1,8 @@
+## 0.3.0 - 2017_09_10
+- package updates, vecode version bumped to 1.17.0
+- added config item "mocha.nodeExec" for resolving node executable (current default only for windows)
+- attempt to fix issue #11
+
 ## 0.2.4 - 2017_18_09
 - 'No Mocha options are configured.' message will be no longer showing when settings 'mocha.options' contains empty object.
 

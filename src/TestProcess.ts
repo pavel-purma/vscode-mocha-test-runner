@@ -92,7 +92,7 @@ function createMocha() {
         console.log();
     }
 
-    mocha.reporter(customReporter);
+    mocha.reporter(CustomReporter);
     return mocha;
 }
 
@@ -120,31 +120,32 @@ function runMocha(mocha: Mocha) {
     });
 }
 
-function customReporter(runner: any, options: any) {
-    // to get 'spec' output to stdout ...
-    new Mocha.reporters.Spec(runner);
+class CustomReporter extends Mocha.reporters.Spec { 
+    constructor(runner: Mocha.IRunner, options: any) { 
+        super(runner);
 
-    results = {};
+        results = {};
 
-    runner
-        .on('suite', suite => suitePath.push(suite.title))
-        .on('suite end', () => suitePath.pop())
-        .on('pass', (test: any) => {
-            const selector = getFileSelector(test.file);
-            results[selector] = results[selector] || [];
-            results[selector].push({
-                selector: trimArray(suitePath).concat([test.title]),
-                state: 'Success'
+        (runner as any)
+            .on('suite', suite => suitePath.push(suite.title))
+            .on('suite end', () => suitePath.pop())
+            .on('pass', (test: any) => {
+                const selector = getFileSelector(test.file);
+                results[selector] = results[selector] || [];
+                results[selector].push({
+                    selector: trimArray(suitePath).concat([test.title]),
+                    state: 'Success'
+                });
+            })
+            .on('fail', (test: any, err: any) => {
+                const selector = getFileSelector(test.file);
+                results[selector] = results[selector] || [];
+                results[selector].push({
+                    selector: trimArray(suitePath).concat([test.title]),
+                    state: 'Fail'
+                });
             });
-        })
-        .on('fail', (test: any, err: any) => {
-            const selector = getFileSelector(test.file);
-            results[selector] = results[selector] || [];
-            results[selector].push({
-                selector: trimArray(suitePath).concat([test.title]),
-                state: 'Fail'
-            });
-        });
+    }
 }
 
 function resolveGlob(): Promise<string[]> {

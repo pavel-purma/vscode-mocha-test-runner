@@ -2,7 +2,7 @@
     "name": "vscode-mocha-test-runner",
     "displayName": "Mocha test runner",
     "description": "Code lens provider and runner for mocha unit tests.",
-    "version": "0.2.4",
+    "version": "0.3.0",
     "publisher": "cstechnologies",
     "icon": "images/icon.png",
     "repository": {
@@ -10,7 +10,7 @@
         "url": "https://github.com/pavel-purma/vscode-mocha-test-runner.git"
     },
     "engines": {
-        "vscode": "^1.10.2"
+        "vscode": "^1.17.0"
     },
     "categories": [
         "Other"
@@ -88,6 +88,12 @@
                     "default": "",
                     "description": "Package.json script, that will server as compile command",
                     "type": "string"
+                },
+                "mocha.nodeExec": {
+                    "--": "This is wrong, but i dont have acces to non-windows enviroment to fix it ...",
+                    "default": "c:\\Program Files\\nodejs\\node.exe",
+                    "description": "path to node executable",
+                    "type": "string"
                 }
             }
         },
@@ -125,21 +131,21 @@
         "test": "node ./node_modules/vscode/bin/test"
     },
     "dependencies": {
-        "chai": "^3.5.0",
-        "deep-extend": "^0.4.1",
+        "chai": "^4.1.2",
+        "deep-extend": "^0.5.0",
         "escape-regexp": "0.0.1",
-        "mocha": "^3.2.0",
+        "mocha": "^4.0.1",
         "npm-run": "^4.1.2",
-        "typescript": "^2.2.2",
-        "vscode": "^1.1.0"
+        "typescript": "^2.5.3",
+        "vscode": "^1.1.5"
     },
     "devDependencies": {
-        "@types/chai": "^3.4.35",
+        "@types/chai": "^4.0.4",
         "@types/deep-extend": "^0.4.30",
-        "@types/diff": "0.0.31",
-        "@types/glob": "^5.0.30",
-        "@types/mocha": "^2.2.40",
-        "@types/node": "^7.0.12",
-        "@types/source-map": "^0.5.0"
+        "@types/diff": "3.2.2",
+        "@types/glob": "^5.0.33",
+        "@types/mocha": "^2.2.43",
+        "@types/node": "^8.0.33",
+        "@types/source-map": "^0.5.1"
     }
 }

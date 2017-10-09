@@ -12,6 +12,7 @@ interface Config {
     ignoreGlobs: string[];
     debugTrace: string;
     compilerScript: string;
+    nodeExec: string;
 
     update: (section: string, value: any) => void;
 }
@@ -30,6 +31,7 @@ export const config: Config = {
     get ignoreGlobs() { return get<string[]>('ignoreGlobs'); },
     get debugTrace() { return get<string>('debugTrace'); },
     get compilerScript() { return get<string>('compilerScript'); },
+    get nodeExec() { return get<string>('nodeExec'); },
     update: (section: string, value: any) => {
         vscode.workspace.getConfiguration('mocha').update(section, value);
     }
