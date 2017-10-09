@@ -28,15 +28,11 @@ export function getDocumentSelector(document: vscode.TextDocument) {
     return (index === -1) ? selector : selector.substring(0, index);
 }
 
-
-const index = config.glob.lastIndexOf('.');
-const patternBase = config.glob.substr(0, index);
-
 export const languages = [
-    { language: 'javascript', pattern: patternBase + '.js' },
-    { language: 'javascriptreact', pattern: patternBase + '.jsx' },
-    { language: 'typescript', pattern: patternBase + '.ts' },
-    { language: 'typescriptreact', pattern: patternBase + '.tsx' }
+    { language: 'javascript', pattern: config.glob },
+    { language: 'javascriptreact', pattern: config.glob },
+    { language: 'typescript', pattern: config.glob },
+    { language: 'typescriptreact', pattern: config.glob }
 ];
 
 export function throwIfNot(source: string, value: any, name: string) {
@@ -84,7 +80,7 @@ export function fork(modulePath: string, args?: string[], options?: ForkOptions)
 
     // ADDED: remove --inspect-brk= atribute from original arguments (in case of debugging extension)
     const index = execArgv.findIndex(o => o.startsWith('--inspect-brk='));
-    if (index !== -1) { 
+    if (index !== -1) {
         execArgv.splice(index, 1);
     }
 
