@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TestsCodeLensProvider, TestCodeLensBase } from "./TestsCodeLensProvider";
 import { languages } from "./Utils";
 import { commandRunTests, commandRunAllTests, commandRunFileTests, commandRunScript } from "./commands";
-import { config } from "./Config";
+import { config } from "./config";
 
 export let codeLensProvider: TestsCodeLensProvider;
 export let outputChannel: vscode.OutputChannel;
