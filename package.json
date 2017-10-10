@@ -2,7 +2,7 @@
     "name": "vscode-mocha-test-runner",
     "displayName": "Mocha test runner",
     "description": "Code lens provider and runner for mocha unit tests.",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "publisher": "cstechnologies",
     "icon": "images/icon.png",
     "repository": {
