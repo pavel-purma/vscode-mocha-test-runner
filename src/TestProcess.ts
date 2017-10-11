@@ -68,6 +68,7 @@ function createMocha() {
         reporterOptions?: any;
         slow?: number;
         bail?: boolean;
+        requires?: string[];
     } = undefined;
 
     if (args.options) {

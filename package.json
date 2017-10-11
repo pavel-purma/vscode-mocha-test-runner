@@ -39,6 +39,10 @@
                     "default": {},
                     "description": "Options passed to Mocha."
                 },
+                "mocha.requires": {
+                    "default": {},
+                    "description": "Array of module required to run Mocha. (for example babel-register, coffee-script/register or ts-node/register)"
+                },
                 "mocha.env": {
                     "default": {},
                     "description": "Environment variables to run your tests."

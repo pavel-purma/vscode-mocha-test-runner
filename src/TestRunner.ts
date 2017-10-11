@@ -37,6 +37,7 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
         env: config.env,
         execPath: config.nodeExec,
         execArgv: [],
+        requires: config.requires || [],
     };
 
     if (debug) {

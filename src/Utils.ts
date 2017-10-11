@@ -64,11 +64,16 @@ export function spawnTestProcess(modulePath: string, args?: string[], options?: 
     execArgv = [...(options.execArgv)];
 
 
-    args = execArgv.concat([modulePath], args);
     options.stdio = ['pipe', 'pipe', 'pipe', 'ipc']
 
+    let requiresArgs = []
+    if (options.requires) {
+        for (const req of options.requires) {
+            requiresArgs.push('-r', req)
+        }
     }
 
+    args = execArgv.concat(requiresArgs, [modulePath], args);
 
     console.log('spawning:', options.execPath, args, options)
     return spawn(options.execPath, args, options);
