@@ -5,9 +5,9 @@ import * as fs from 'fs';
 import { Glob } from 'glob';
 import { ForkOptions } from 'child_process';
 import { config } from "./config";
-import { fork, throwIfNot } from "./Utils";
 import { TestProcessRequest, TestsResults, TestProcessResponse } from "./Types";
 import { runTestProcess } from "./TestProcess";
+import {spawnTestProcess, throwIfNot} from './Utils';
 
 export function runTests(debug = false, grep?: string, fileSelectors?: string[]) {
     return runTestsCore({ grep, fileSelectors }, debug);
@@ -32,20 +32,19 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
 
     const testProcess = path.join(path.dirname(module.filename), 'TestProcess.js');
 
-    const forkOptions = {
+    const spawnTestProcessOptions = {
         cwd: vscode.workspace.rootPath,
-        silent: true,
         env: config.env,
         execPath: config.nodeExec,
-        execArgv: []
+        execArgv: [],
     };
 
     if (debug) {
-        forkOptions.execArgv = ['--debug-brk=' + config.debugPort];
+        spawnTestProcessOptions.execArgv = ['--debug-brk=' + config.debugPort];
     }
-    
-    const childProcess = fork(testProcess, [], forkOptions);
-    
+
+    const childProcess = spawnTestProcess(testProcess, [], spawnTestProcessOptions);
+
     if (debug) {
         vscode.commands.executeCommand('vscode.startDebug', {
             "name": "Attach",
@@ -65,7 +64,7 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
                 path.join(args.workspacePath, args.rootPath, "**/*.js")
             ],
         });
-        
+
         args.options = { ...args.options, timeout: 360000 };
     }
 
@@ -84,19 +83,19 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             results = data;
         });
 
-        childProcess.stdout.on('data', data => { 
-            if (typeof data !== 'string') { 
+        childProcess.stdout.on('data', data => {
+            if (typeof data !== 'string') {
                 data = data.toString('utf8');
             }
 
             stdout.push(data);
         });
 
-        childProcess.stderr.on('data', data => { 
-            if (typeof data !== 'string') { 
+        childProcess.stderr.on('data', data => {
+            if (typeof data !== 'string') {
                 data = data.toString('utf8');
             }
-            
+
             if (data.startsWith('Warning:') ||
                 data.startsWith('Debugger listening on')) {
                 stdout.push(data);
@@ -104,8 +103,8 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             }
 
             stderr.push(data);
-            if (!stderrTimeout) { 
-                stderrTimeout = setTimeout(() => { 
+            if (!stderrTimeout) {
+                stderrTimeout = setTimeout(() => {
                     childProcess.kill('SIGTERM');
                     doReject();
                 }, 500);
@@ -116,9 +115,9 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
             if (code !== 0) {
                 if (stderrTimeout) {
                     pendingReject = true;
-                } else { 
+                } else {
                     doReject();
-                }    
+                }
             } else {
                 resolve({
                     results,
@@ -128,12 +127,12 @@ function runTestsCore(processArgs: Partial<TestProcessRequest>, debug: boolean) 
         });
 
         if (debug) {
-            // give debugger some time to properly attach itself before running tests ...        
+            // give debugger some time to properly attach itself before running tests ...
             setTimeout(() => {
                 childProcess.send(args);
             }, 1000);
         } else {
             childProcess.send(args);
-        }       
+        }
     });
 }
