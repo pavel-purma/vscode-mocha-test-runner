@@ -12,10 +12,12 @@ const suitePath: string[] = [];
 process.on('message', processArgs => {
     runTestProcess(processArgs)
         .then(results => {
+            console.log("Mocha VSCode Runner - done")
             process.send(results);
             process.exit(0);
         })
         .catch(err => {
+            console.log('Mocha VSCode Runner Error:', err)
             process.send(err);
             process.exit(-1);
         });
