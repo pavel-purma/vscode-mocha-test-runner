@@ -13,6 +13,7 @@ interface Config {
     debugTrace: string;
     compilerScript: string;
     nodeExec: string;
+    requires: string[];
 
     update: (section: string, value: any) => void;
 }
@@ -32,6 +33,7 @@ export const config: Config = {
     get debugTrace() { return get<string>('debugTrace'); },
     get compilerScript() { return get<string>('compilerScript'); },
     get nodeExec() { return get<string>('nodeExec'); },
+    get requires() { return get<string[]>('requires'); },
     update: (section: string, value: any) => {
         vscode.workspace.getConfiguration('mocha').update(section, value);
     }

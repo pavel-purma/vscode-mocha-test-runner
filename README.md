@@ -1,4 +1,4 @@
-# Mocha test runner 
+# Mocha test runner
 
 Creates code lens before each **describe**, **it**, **suite** and **test** function call in test files.
 
@@ -6,7 +6,23 @@ Lense on **it** and **test** function shows last test result and can be used to 
 
 Lense on **describe** and **suite** shows aggregated results from nested **it** and **test** and can be used to run all tests in given group / only test with specific status.
 
-Tests not writen in javascript that mocha can load (es6 with import command, razor syntax, typescript, etc.) needs to be transpiled to es5 or es6 without import command - see example projects in .vscode-test directory. Mocha is searching for transpiled scripts ```**/*.test.js``` (configurable - **mocha.glob**) in project root directory or in **mocha.sourceDir** (appended to project root directory - used in tandem with **mocha.outputDir** for non es5 sources - see examples).
+To run tests that need to be transpiled (es6 with imports, typescript, ..) are supported using one of the two following methods:
+
+To ensure Mocha test runner works property don't forget to set the **mocha.nodeExec** variable in
+your settings. You must provide an absolute path.
+
+### Map a source directory to a build directory
+This method is useful if you want to provide your own transpile command, and want to map the resulting build directory to your source directory.
+see example projects in .vscode-test directory. Mocha is searching for transpiled scripts ```**/*.test.js``` (configurable - **mocha.glob**) in project root directory or in **mocha.sourceDir** (appended to project root directory - used in tandem with **mocha.outputDir** for non es5 sources - see examples).
+
+### Automatically transpile them
+If you want to automatically run a transpiler on your source, using the equivalent of the --require mocha parameter, set the **mocha.requires** variable in your project settings.
+
+For example you can use the following:
+
+- babel: `mocha.requires: ['babel-register']`
+- typescript: `mocha.requires: ['ts-node/register']`
+- coffeescript: `mocha.requires: ['coffee-script/register']`
 
 
 ## Preview:
@@ -24,7 +40,7 @@ Tests not writen in javascript that mocha can load (es6 with import command, raz
 
 ## Known issues:
 - (Wont fix) Tests not wrapped by describe function are ignored. (mocha is not returning file path for these - no way to unique identify tests with same title in different files)
-- Debugger wont see breakpoints in ts file when compiled with webpack (source maps issue)
+- Debugger won't see breakpoints in ts file when compiled with webpack (source maps issue)
 
 ## TODO:
 - remove "mocha.SourceDir" property and use sourcemaps to search for original source file from transpiled file.
