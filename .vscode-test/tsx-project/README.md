@@ -1,4 +1,4 @@
-# tsx-project
+# tsx-project BROKEN - lenses will be shown, but test will not start
 
 Source and test files are writen in react typescript and transpiled with to es6 with tsc. - using **npm run test:watch** command
 
