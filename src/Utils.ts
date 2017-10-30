@@ -1,49 +1,48 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
+import { ChildProcess, ForkOptions, spawn } from 'child_process';
 import * as fs from 'fs';
-import { config } from "./config";
-import { outputChannel } from "./extension";
-import { spawn, ForkOptions, ChildProcess } from 'child_process';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { config } from './config';
+import { outputChannel } from './extension';
 
 export function getFileSelector(fileName: string) {
-    throwIfNot('getFileSelector', fileName, 'fileName');
+  throwIfNot('getFileSelector', fileName, 'fileName');
 
-
-    const selector = path.relative(vscode.workspace.rootPath, fileName);
-    const index = selector.lastIndexOf('.');
-    return (index === -1) ? selector : selector.substring(0, index);
+  const selector = path.relative(vscode.workspace.rootPath, fileName);
+  const index = selector.lastIndexOf('.');
+  return index === -1 ? selector : selector.substring(0, index);
 }
 
 export function getDocumentSelector(document: vscode.TextDocument) {
-    throwIfNot('getDocumentSelector', document, 'document');
+  throwIfNot('getDocumentSelector', document, 'document');
 
-    let rootDir = vscode.workspace.rootPath;
-    const tsConfigFile = path.join(vscode.workspace.rootPath, 'tsconfig.json');
-    if (config.sourceDir) {
-        rootDir = path.join(rootDir, config.sourceDir);
-    }
+  let rootDir = vscode.workspace.rootPath;
+  const tsConfigFile = path.join(vscode.workspace.rootPath, 'tsconfig.json');
+  if (config.sourceDir) {
+    rootDir = path.join(rootDir, config.sourceDir);
+  }
 
-    let selector = path.relative(rootDir, document.fileName);
-    selector = path.join(config.outputDir, selector);
-    const index = selector.lastIndexOf('.');
-    return (index === -1) ? selector : selector.substring(0, index);
+  let selector = path.relative(rootDir, document.fileName);
+  selector = path.join(config.outputDir, selector);
+  const index = selector.lastIndexOf('.');
+  return index === -1 ? selector : selector.substring(0, index);
 }
 
 export const languages = [
-    { language: 'javascript', pattern: config.glob },
-    { language: 'javascriptreact', pattern: config.glob },
-    { language: 'typescript', pattern: config.glob },
-    { language: 'typescriptreact', pattern: config.glob }
+  { language: 'javascript', pattern: config.glob },
+  { language: 'javascriptreact', pattern: config.glob },
+  { language: 'typescript', pattern: config.glob },
+  { language: 'typescriptreact', pattern: config.glob },
 ];
 
 export function throwIfNot(source: string, value: any, name: string) {
-    if (typeof value === 'undefined') {
-        throw new Error(source + '- invalid parameter: ' + name);
-    }
+  if (typeof value === 'undefined') {
+    throw new Error(source + '- invalid parameter: ' + name);
+  }
 }
 
 export function appendError(err) {
-    outputChannel.appendLine(err);
+  outputChannel.appendLine(err);
 }
 
 export interface SpawnTestProcessOptions {
@@ -56,25 +55,28 @@ export interface SpawnTestProcessOptions {
 }
 
 // spawn our TestProcess program
-export function spawnTestProcess(modulePath: string, args?: string[], options?: SpawnTestProcessOptions): ChildProcess {
-    // Get options and args arguments.
-    var execArgv: string[];
+export function spawnTestProcess(
+  modulePath: string,
+  args?: string[],
+  options?: SpawnTestProcessOptions,
+): ChildProcess {
+  // Get options and args arguments.
+  let execArgv: string[];
 
-    // Prepare arguments for fork:
-    execArgv = [...(options.execArgv)];
+  // Prepare arguments for fork:
+  execArgv = [...options.execArgv];
 
+  options.stdio = ['pipe', 'pipe', 'pipe', 'ipc'];
 
-    options.stdio = ['pipe', 'pipe', 'pipe', 'ipc']
-
-    let requiresArgs = []
-    if (options.requires) {
-        for (const req of options.requires) {
-            requiresArgs.push('-r', req)
-        }
+  const requiresArgs = [];
+  if (options.requires) {
+    for (const req of options.requires) {
+      requiresArgs.push('-r', req);
     }
+  }
 
-    args = execArgv.concat(requiresArgs, [modulePath], args);
+  args = execArgv.concat(requiresArgs, [modulePath], args);
 
-    console.log('spawning:', options.execPath, args, options)
-    return spawn(options.execPath, args, options);
+  console.log('spawning:', options.execPath, args, options);
+  return spawn(options.execPath, args, options);
 }
