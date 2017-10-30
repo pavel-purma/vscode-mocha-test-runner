@@ -2,7 +2,7 @@
     "name": "vscode-mocha-test-runner",
     "displayName": "Mocha test runner",
     "description": "Code lens provider and runner for mocha unit tests.",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "publisher": "cstechnologies",
     "icon": "images/icon.png",
     "repository": {
@@ -40,8 +40,12 @@
                     "description": "Options passed to Mocha."
                 },
                 "mocha.requires": {
-                    "default": {},
-                    "description": "Array of module required to run Mocha. (for example babel-register, coffee-script/register or ts-node/register)"
+                    "default": [],
+                    "description": "Array of module required to run Mocha. (for example babel-register, coffee-script/register or ts-node/register)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "mocha.env": {
                     "default": {},
