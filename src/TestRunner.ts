@@ -51,7 +51,7 @@ function runTestsCore(
   };
 
   if (debug) {
-    spawnTestProcessOptions.execArgv = ['--debug-brk=' + config.debugPort];
+    spawnTestProcessOptions.execArgv = ['--inspect-brk=' + config.debugPort];
   }
 
   const childProcess = spawnTestProcess(
